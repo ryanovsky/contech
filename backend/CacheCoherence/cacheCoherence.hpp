@@ -4,8 +4,6 @@
 #include <deque>
 #include "simpleCache.hpp"
 
-
-
 class CacheCoherence
 {
 public:
