@@ -3,22 +3,19 @@
 
 int main(int argc, char** argv)
 {
-    if (argc < 2)
+    if (argc != 3)
     {
         fprintf(stderr, "%s <size of cache, log2> <taskgraph>\n", argv[0]);
         return 1;
     }
 
-    if (argc == 3)
+    else
     {
-        CacheCoherenceBackend* bcc = new CacheCoherenceBackend(atoi(argv[1]), 2, 1);
-        contech::SimpleBackendWrapper* sbw = new contech::SimpleBackendWrapper(argv[2], bcc);
-
-        sbw->runBackend();
-        sbw->completeRun(stdout);
-        delete sbw;
+        CacheCoherence* bcc = new CacheCoherence(argv[2], atoi(argv[1]),2);
+        printf("created cache coherence object\n");
+        bcc->run();
         delete bcc;
-    }
+    }/**
     else
     {
         for (int c = 10; c <= 28; c++)
@@ -31,7 +28,7 @@ int main(int argc, char** argv)
             delete sbw;
             delete bcc;
         }
-    }
+    }*/
 
     return 0;
 }

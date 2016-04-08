@@ -5,15 +5,8 @@
 #include <vector>
 #include <deque>
 #include <map>
-#include "bus.hpp"
 
-#define NUM_PROCESSORS 4
-
-typedef enum {
-  MODIFIED;
-  EXCLUSIVE;
-  SHARED;
-} cache_line_state;
+#include "TraceWrapper.hpp"
 
 struct cache_stats_t {
     uint64_t accesses;
@@ -28,25 +21,27 @@ struct cache_line
     uint64_t lastAccess;
     bool dirty;
     char valid_bits;
-    cache_line_state state[NUM_PROCESSORS];
 };
 
     uint64_t read_misses;
     uint64_t write_misses;
     uint64_t accesses;
 
+    std::vector< std::deque<cache_line> > cacheBlocks;
 
     bool updateCacheLine(uint64_t idx, uint64_t tag, uint64_t offset, uint64_t num, bool);
     void printIndex(uint64_t idx);
 
-public:
-    int core;
-    std::vector< std::deque<cache_line> > cacheBlocks;
+public:    
 
-    SimpleCache(int c);
+    uint64_t global_c; 
+    static const uint64_t global_b = 6; 
+    uint64_t global_s; 
+
+    SimpleCache();
+    SimpleCache(uint64_t, uint64_t);
     double getMissRate();
     bool updateCache(bool rw, char numOfBytes, uint64_t address, cache_stats_t* p_stats);
-    void updateState(bool write, cache_line cacheline);
 };
 
 struct mallocStats
@@ -58,6 +53,7 @@ struct mallocStats
 
 class SimpleCacheBackend  : public contech::Backend
 {
+    SimpleCache* sharedCache;
     std::map <contech::ContextId, SimpleCache> contextCacheState;
     std::map <uint64_t, unsigned int> basicBlockMisses;
     std::map <uint64_t, mallocStats> allocBlocks;
@@ -67,8 +63,9 @@ class SimpleCacheBackend  : public contech::Backend
 public:
     virtual void resetBackend();
     virtual void updateBackend(contech::Task*);
+    virtual void updateBackend(MemReqContainer&);
     virtual void completeBackend(FILE*, contech::TaskGraphInfo*);
-
+    
     SimpleCacheBackend(uint64_t c, uint64_t s, int printMissLoc);
 };
 

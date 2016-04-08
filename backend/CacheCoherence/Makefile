@@ -1,7 +1,7 @@
 PROJECT = ccache
 CXX=g++
 CXXFLAGS= -g -std=c++11 -O3
-OBJECTS= main.o simpleCache.o cacheCoherence.o
+OBJECTS= main.o simpleCache.o TraceWrapper.o cacheCoherence.o
 INCLUDES= -I../../common/taskLib/
 LIBS= -L../../common/taskLib/ -lTask -lz -L.
 EXTERNALS=
