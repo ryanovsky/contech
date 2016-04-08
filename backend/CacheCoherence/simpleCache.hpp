@@ -7,6 +7,19 @@
 #include <map>
 
 #include "TraceWrapper.hpp"
+#include "cacheCoherence.hpp"
+
+enum cache_state {
+  MODIFIED,
+  SHARED,
+  INVALID
+};
+
+enum request_t {
+  BUSRDX,
+  BUSRD,
+  NOTHING
+};
 
 struct cache_stats_t {
     uint64_t accesses;
@@ -21,6 +34,7 @@ struct cache_line
     uint64_t lastAccess;
     bool dirty;
     char valid_bits;
+    cache_state state;
 };
 
     uint64_t read_misses;
@@ -32,18 +46,23 @@ struct cache_line
     bool updateCacheLine(uint64_t idx, uint64_t tag, uint64_t offset, uint64_t num, bool);
     void printIndex(uint64_t idx);
 
-public:    
+public:
 
-    uint64_t global_c; 
-    static const uint64_t global_b = 6; 
-    uint64_t global_s; 
+    uint64_t global_c;
+    static const uint64_t global_b = 6;
+    uint64_t global_s;
 
     SimpleCache();
     SimpleCache(uint64_t, uint64_t);
     double getMissRate();
     bool updateCache(bool rw, char numOfBytes, uint64_t address, cache_stats_t* p_stats);
+
+    cache_line *addressToCacheline(uint64_t address);
+    void updateStatus(request_t request, uint64_t addr);
 };
 
+
+/*
 struct mallocStats
 {
     uint32_t bbid;
@@ -65,8 +84,9 @@ public:
     virtual void updateBackend(contech::Task*);
     virtual void updateBackend(MemReqContainer&);
     virtual void completeBackend(FILE*, contech::TaskGraphInfo*);
-    
+
     SimpleCacheBackend(uint64_t c, uint64_t s, int printMissLoc);
 };
+*/
 
 #endif

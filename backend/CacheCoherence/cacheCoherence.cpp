@@ -5,7 +5,6 @@
 
 using namespace contech;
 
-
 CacheCoherence::CacheCoherence(char *fname, uint64_t c, uint64_t s){
   timer = 0;
   tw = new TraceWrapper(fname); //use trace wrapper to order all memory actions

@@ -6,7 +6,6 @@
 
 #define NUM_PROCESSORS 4
 
-
 class CacheCoherence
 {
 public:
