@@ -153,8 +153,8 @@ double SimpleCache::getMissRate()
 {
   return (double)(read_misses + write_misses) / (double)(accesses);
 }
-
-cache_line *SimpleCache::addressToCacheline(uint64_t address){
+/*
+SimpleCache::cache_line* SimpleCache::addressToCacheline(uint64_t address){
   uint64_t idx = address >> global_b;
   uint64_t offset = address & ((0x1<<global_b) - 1);
   uint64_t tag = address >> ((global_c - global_s));
@@ -166,30 +166,68 @@ cache_line *SimpleCache::addressToCacheline(uint64_t address){
   }
   return NULL;
 }
-
+*/
 void SimpleCache::updateStatus(request_t request, uint64_t addr){
-  cache_line *cl = addressToCacheline(addr);
-  if (cl == NULL) return;
+  //cache_line *cl = addressToCacheline(addr);
 
+  //cache_line *cl = NULL;
+
+  uint64_t idx = addr >> global_b;
+  uint64_t offset = addr & ((0x1<<global_b) - 1);
+  uint64_t tag = addr >> ((global_c - global_s));
+  bool inCache = false;
+
+  for (auto it = cacheBlocks[idx].begin(), et = cacheBlocks[idx].end(); it != et; ++it)
+  {
+    if (it->tag == tag){
+      //cl =  it;
+      inCache = true;
   if (request == BUSRDX){
-    if (cl->state == MODIFIED){
+    if (it->state == MODIFIED){
       //flush to mem
     }
     uint64_t idx = addr >> global_b;
-    cl->state = INVALID;
+    it->state = INVALID;
     //remove this from the cache
-    deque<cache_line>::iterator remover = cl;
-    cacheBlocks[idx].erase(remover);
+    //deque<cache_line>::iterator remover = cl;
+    cacheBlocks[idx].erase(it);
   }
   else if (request == BUSRD){
-    if (cl->state == MODIFIED){
+    if (it->state == MODIFIED){
       //flush to mem
-      cl->state = SHARED;
+      it->state = SHARED;
     }
   }
   else {
     printf("INVALID REQUEST\n");
   }
+      break;
+    }
+  }
+
+  if (!inCache) return;
+
+  /*
+  if (request == BUSRDX){
+    if (it->state == MODIFIED){
+      //flush to mem
+    }
+    uint64_t idx = addr >> global_b;
+    it->state = INVALID;
+    //remove this from the cache
+    deque<cache_line>::iterator remover = cl;
+    cacheBlocks[idx].erase(remover);
+  }
+  else if (request == BUSRD){
+    if (it->state == MODIFIED){
+      //flush to mem
+      it->state = SHARED;
+    }
+  }
+  else {
+    printf("INVALID REQUEST\n");
+  }
+  */
 }
 
 

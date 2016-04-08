@@ -7,7 +7,6 @@
 #include <map>
 
 #include "TraceWrapper.hpp"
-#include "cacheCoherence.hpp"
 
 enum cache_state {
   MODIFIED,
