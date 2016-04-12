@@ -1,4 +1,3 @@
-#include "cacheCoherence.hpp"
 #include "simpleCache.hpp"
 
 class Bus

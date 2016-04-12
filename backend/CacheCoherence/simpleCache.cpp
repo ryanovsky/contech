@@ -34,6 +34,19 @@ SimpleCache::SimpleCache(uint64_t c, uint64_t s)
   accesses = 0;
 }
 
+SimpleCache::SimpleCache(uint64_t c, uint64_t s, Bus *b, int cn)
+{
+  global_c = c;
+  global_s = s;
+  cacheBlocks.resize(0x1 << (global_c - (global_s + global_b)));
+  read_misses = 0;
+  write_misses = 0;
+  accesses = 0;
+
+  bus = b;
+  core_num = cn;
+}
+
 void SimpleCache::printIndex(uint64_t idx)
 {
   for (auto it = cacheBlocks[idx].begin(), et = cacheBlocks[idx].end(); it != et; ++it)
@@ -107,6 +120,13 @@ bool SimpleCache::updateCacheLine(uint64_t idx, uint64_t tag, uint64_t offset, u
 
 bool SimpleCache::updateCache(bool write, char numOfBytes, uint64_t address, cache_stats_t* p_stats)
 {
+  // send message to the bus
+  request_t request
+  if (write) request = BUSRDX;
+  else request = BUSRD;
+  int request_result = sendMsgToBus(core_num, request, address);
+  if (!request_result) printf("Issue with the bus!\n");
+
   unsigned int bbMissCount = 0;
   uint64_t cacheIdx = address >> global_b;
   uint64_t offset = address & ((0x1<<global_b) - 1);
@@ -153,25 +173,8 @@ double SimpleCache::getMissRate()
 {
   return (double)(read_misses + write_misses) / (double)(accesses);
 }
-/*
-SimpleCache::cache_line* SimpleCache::addressToCacheline(uint64_t address){
-  uint64_t idx = address >> global_b;
-  uint64_t offset = address & ((0x1<<global_b) - 1);
-  uint64_t tag = address >> ((global_c - global_s));
 
-  for (auto it = cacheBlocks[idx].begin(), et = cacheBlocks[idx].end(); it != et; ++it)
-  {
-    if (it->tag == tag)
-      return it;
-  }
-  return NULL;
-}
-*/
 void SimpleCache::updateStatus(request_t request, uint64_t addr){
-  //cache_line *cl = addressToCacheline(addr);
-
-  //cache_line *cl = NULL;
-
   uint64_t idx = addr >> global_b;
   uint64_t offset = addr & ((0x1<<global_b) - 1);
   uint64_t tag = addr >> ((global_c - global_s));
@@ -180,55 +183,32 @@ void SimpleCache::updateStatus(request_t request, uint64_t addr){
   for (auto it = cacheBlocks[idx].begin(), et = cacheBlocks[idx].end(); it != et; ++it)
   {
     if (it->tag == tag){
-      //cl =  it;
       inCache = true;
-  if (request == BUSRDX){
-    if (it->state == MODIFIED){
-      //flush to mem
-    }
-    uint64_t idx = addr >> global_b;
-    it->state = INVALID;
-    //remove this from the cache
-    //deque<cache_line>::iterator remover = cl;
-    cacheBlocks[idx].erase(it);
-  }
-  else if (request == BUSRD){
-    if (it->state == MODIFIED){
-      //flush to mem
-      it->state = SHARED;
-    }
-  }
-  else {
-    printf("INVALID REQUEST\n");
-  }
+      if (request == BUSRDX){
+        if (it->state == MODIFIED){
+          //flush to mem
+        }
+        uint64_t idx = addr >> global_b;
+        it->state = INVALID;
+        //remove this from the cache
+        cacheBlocks[idx].erase(it);
+      }
+      else if (request == BUSRD){
+        if (it->state == MODIFIED){
+          //flush to mem
+          it->state = SHARED;
+        }
+      }
+      else {
+        printf("INVALID REQUEST\n");
+      }
       break;
     }
   }
 
   if (!inCache) return;
-
-  /*
-  if (request == BUSRDX){
-    if (it->state == MODIFIED){
-      //flush to mem
-    }
-    uint64_t idx = addr >> global_b;
-    it->state = INVALID;
-    //remove this from the cache
-    deque<cache_line>::iterator remover = cl;
-    cacheBlocks[idx].erase(remover);
-  }
-  else if (request == BUSRD){
-    if (it->state == MODIFIED){
-      //flush to mem
-      it->state = SHARED;
-    }
-  }
-  else {
-    printf("INVALID REQUEST\n");
-  }
-  */
 }
+
 
 
 
