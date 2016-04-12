@@ -1,4 +1,3 @@
-//#include <Backend.hpp>
 #include <vector>
 #include <map>
 #include <deque>
@@ -15,7 +14,7 @@ class CacheCoherence
 
     TraceWrapper* tw;
     std::map <contech::ContextId, SimpleCache> contextCacheState;
-    SimpleCache *sharedCache[NUM_PROCESSORS];
+    SimpleCache * sharedCache[NUM_PROCESSORS];
     cache_stats_t * p_stats[NUM_PROCESSORS];
     bool visited[NUM_PROCESSORS];
     Bus *interconnect;

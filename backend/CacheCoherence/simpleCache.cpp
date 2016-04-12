@@ -1,4 +1,5 @@
 #include "simpleCache.hpp"
+#include "memory.hpp"
 #include <vector>
 #include <algorithm>
 
@@ -34,7 +35,7 @@ SimpleCache::SimpleCache(uint64_t c, uint64_t s)
   accesses = 0;
 }
 
-SimpleCache::SimpleCache(uint64_t c, uint64_t s, Bus *b, int cn)
+SimpleCache::SimpleCache(uint64_t c, uint64_t s, int cn)
 {
   global_c = c;
   global_s = s;
@@ -43,7 +44,6 @@ SimpleCache::SimpleCache(uint64_t c, uint64_t s, Bus *b, int cn)
   write_misses = 0;
   accesses = 0;
 
-  bus = b;
   core_num = cn;
 }
 
@@ -72,6 +72,8 @@ bool SimpleCache::updateCacheLine(uint64_t idx, uint64_t tag, uint64_t offset, u
       it->dirty = (it->dirty || write);
       it->lastAccess = num;
 
+      if (write) it->state = MODIFIED;
+      else it->state = SHARED;
       return true;
     }
     // Is this the LRU block?
@@ -91,6 +93,8 @@ bool SimpleCache::updateCacheLine(uint64_t idx, uint64_t tag, uint64_t offset, u
     t.tag = tag;
     t.dirty = write;
     t.lastAccess = num;
+    if (write) t.state = MODIFIED;
+    else t.state = SHARED;
 
     cacheBlocks[idx].push_back(t);
     return false;
@@ -120,13 +124,6 @@ bool SimpleCache::updateCacheLine(uint64_t idx, uint64_t tag, uint64_t offset, u
 
 bool SimpleCache::updateCache(bool write, char numOfBytes, uint64_t address, cache_stats_t* p_stats)
 {
-  // send message to the bus
-  request_t request
-  if (write) request = BUSRDX;
-  else request = BUSRD;
-  int request_result = sendMsgToBus(core_num, request, address);
-  if (!request_result) printf("Issue with the bus!\n");
-
   unsigned int bbMissCount = 0;
   uint64_t cacheIdx = address >> global_b;
   uint64_t offset = address & ((0x1<<global_b) - 1);
@@ -175,10 +172,11 @@ double SimpleCache::getMissRate()
 }
 
 void SimpleCache::updateStatus(request_t request, uint64_t addr){
-  uint64_t idx = addr >> global_b;
+  uint64_t idx = (addr >> global_b);// % cacheBlocks.size();
   uint64_t offset = addr & ((0x1<<global_b) - 1);
   uint64_t tag = addr >> ((global_c - global_s));
   bool inCache = false;
+  idx &= ((0x1 << (global_c - (global_b + global_s))) - 1);
 
   for (auto it = cacheBlocks[idx].begin(), et = cacheBlocks[idx].end(); it != et; ++it)
   {
@@ -205,8 +203,6 @@ void SimpleCache::updateStatus(request_t request, uint64_t addr){
       break;
     }
   }
-
-  if (!inCache) return;
 }
 
 

@@ -1,7 +1,6 @@
+#include <stdio.h>
 #include "cacheCoherence.hpp"
 #include "simpleCache.hpp"
-#include "TraceWrapper.hpp"
-#include <stdio.h>
 
 using namespace contech;
 
@@ -9,16 +8,14 @@ CacheCoherence::CacheCoherence(char *fname, uint64_t c, uint64_t s){
   timer = 0;
   tw = new TraceWrapper(fname); //use trace wrapper to order all memory actions
 
-  sharedCache = malloc(sizeof(sharedCache *) * NUM_PROCESSORS);
-  interconnect = new Bus(&sharedCache);
-
   for(int i = 0; i < NUM_PROCESSORS; i ++){
-    sharedCache[i] = new SimpleCache(c, s, interconnect, i);
+    sharedCache[i] = new SimpleCache(c, s, i);
     p_stats[i] = new cache_stats_t;
     (p_stats[i])->accesses = 0;
     (p_stats[i])->misses = 0;
     visited[i] = false;
   }
+  interconnect = new Bus(sharedCache);
 }
 
 void CacheCoherence::run()
@@ -26,18 +23,19 @@ void CacheCoherence::run()
   MemReqContainer mrc;
   uint32_t ctid = 0;
   uint32_t prev_ctid = ctid;
+  request_t req;
+  int req_result;
+
   while (tw->getNextMemoryRequest(mrc)) {
     ctid = (uint32_t)(mrc.ctid) - 1;
-    if(visited[ctid]){ //already visited at this time step
-      timer ++;
+    /*if(visited[ctid]){ //already visited at this time step
+      //timer ++;
       for(int i = 0;  i < NUM_PROCESSORS; i ++){ //reset visited array
         visited[i] = false;
       }
     }
-    visited[ctid] = true;
+    visited[ctid] = true;*/
     bool rw = false;
-    printf("time:%d, processor:%d, misses=%d, accesses=%d\n"
-        ,timer, ctid, p_stats[ctid]->misses, p_stats[ctid]->accesses);
     unsigned int memOpPos = 0;
     unsigned long int lastBBID = mrc.bbid;
 
@@ -80,10 +78,17 @@ void CacheCoherence::run()
           bytesToAccess -= accessSize;
           if (srcAddress != 0)
           {
+            // broadcast to bus about stuff
+            req = BUSRD;
+            req_result = interconnect->sendMsgToBus(ctid, req, srcAddress);
+            timer++;
             (sharedCache[ctid])->updateCache(false, accessSize, srcAddress, p_stats[ctid]);
             srcAddress += accessSize;
             (p_stats[ctid])->accesses ++;
           }
+          req = BUSRDX;
+          req_result = interconnect->sendMsgToBus(ctid, req, dstAddress);
+          timer++;
 
           (sharedCache[ctid])->updateCache(true, accessSize, dstAddress, p_stats[ctid]);
           dstAddress += accessSize;
@@ -105,19 +110,25 @@ void CacheCoherence::run()
         if (ma.type == action_type_mem_write)
         {
           rw = true;
+          req = BUSRDX;
         }
         else if (ma.type == action_type_mem_read)
         {
           rw = false;
+          req = BUSRD;
         }
 
+        req_result = interconnect->sendMsgToBus(ctid, req, address);
+        timer++;
         (sharedCache[ctid])->updateCache(rw, accessBytes, address, p_stats[ctid]);
 
         address += accessBytes;
       } while (numOfBytes > 0);
     }
 
-    prev_ctid = ctid;
+    printf("time:%d, processor:%d, misses=%d, accesses=%d\n"
+        ,timer, ctid, p_stats[ctid]->misses, p_stats[ctid]->accesses);
+    //prev_ctid = ctid;
   }
 
   printf("ready for cleanup in run\n");

@@ -1,8 +1,9 @@
 #include "bus.hpp"
 
-Bus::Bus(SimpleCache ** c){
-  caches = c;
-  next_cache = 0;
+Bus::Bus(SimpleCache *c[]){
+  for (int i = 0; i < NUM_PROCESSORS; i++){
+    caches[i] = c[i];
+  }
 }
 
 int Bus::sendMsgToBus(int core_num, request_t request, uint64_t addr){

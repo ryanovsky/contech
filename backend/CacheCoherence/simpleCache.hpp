@@ -7,7 +7,6 @@
 #include <map>
 
 #include "TraceWrapper.hpp"
-#include "bus.hpp"
 
 enum cache_state {
   MODIFIED,
@@ -50,12 +49,11 @@ class SimpleCache
     uint64_t global_c;
     static const uint64_t global_b = 6;
     uint64_t global_s;
-    Bus *bus;
     int core_num;
 
     SimpleCache();
     SimpleCache(uint64_t, uint64_t);
-    SimpleCache(uint64_t, uint64_t, Bus *, int);
+    SimpleCache(uint64_t, uint64_t, int);
     double getMissRate();
     bool updateCache(bool rw, char numOfBytes, uint64_t address, cache_stats_t* p_stats);
 
