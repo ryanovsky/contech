@@ -206,9 +206,33 @@ void SimpleCache::updateStatus(request_t request, uint64_t addr){
 }
 
 
+cache_state SimpleCache::checkState(uint64_t addr){
+  uint64_t idx = (addr >> global_b);// % cacheBlocks.size();
+  uint64_t offset = addr & ((0x1<<global_b) - 1);
+  uint64_t tag = addr >> ((global_c - global_s));
+  bool inCache = false;
+  idx &= ((0x1 << (global_c - (global_b + global_s))) - 1);
 
+  for (auto it = cacheBlocks[idx].begin(), et = cacheBlocks[idx].end(); it != et; ++it)
+  {
+    if (it->tag == tag){
+      inCache = true;
+      return it->state;
+    }
+  }
+  return INVALID;
+}
 
+bool SimpleCache::checkValid(){
 
+  for(int idx = 0; idx < cacheBlocks.size(); idx ++){
+    for (auto it = cacheBlocks[idx].begin(), et = cacheBlocks[idx].end(); it != et; ++it)
+    {
+        if(it->state == INVALID) return false;
+    }
+  }
+  return true;
+}
 /**SimpleCacheBackend::SimpleCacheBackend(uint64_t c, uint64_t s, int printMissLoc) {
 //global_c = c;
 //global_s = s;

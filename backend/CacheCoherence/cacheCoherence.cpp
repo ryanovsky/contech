@@ -85,12 +85,23 @@ void CacheCoherence::run()
             (sharedCache[ctid])->updateCache(false, accessSize, srcAddress, p_stats[ctid]);
             srcAddress += accessSize;
             (p_stats[ctid])->accesses ++;
+            for(int i = 0; i < NUM_PROCESSORS; i ++){
+              if(i == ctid) assert(sharedCache[i]->checkState(srcAddress) == SHARED);
+              else assert(sharedCache[i]->checkState(srcAddress) != MODIFIED);
+            }
           }
           req = BUSRDX;
           req_result = interconnect->sendMsgToBus(ctid, req, dstAddress);
           timer++;
 
+
           (sharedCache[ctid])->updateCache(true, accessSize, dstAddress, p_stats[ctid]);
+          for(int i = 0; i < NUM_PROCESSORS; i ++){
+              if(i == ctid) assert(sharedCache[i]->checkState(dstAddress) == MODIFIED);
+              else assert(sharedCache[i]->checkState(dstAddress) == INVALID);
+          }
+
+
           dstAddress += accessSize;
           (p_stats[ctid])->accesses ++;
         } while (bytesToAccess > 0);
@@ -121,9 +132,29 @@ void CacheCoherence::run()
         req_result = interconnect->sendMsgToBus(ctid, req, address);
         timer++;
         (sharedCache[ctid])->updateCache(rw, accessBytes, address, p_stats[ctid]);
+        if(rw){
+         for(int i = 0; i < NUM_PROCESSORS; i ++){
+              //printf (" cache %d is writing: state[%d]:%d\n",ctid, i, sharedCache[i]->checkState(address));
+              //assert on write that the current processor is in the MODIFIED state alone
+              if(i == ctid) assert(sharedCache[i]->checkState(address) == MODIFIED);
+              else assert(sharedCache[i]->checkState(address) == INVALID);
+          }
+        }
+        else{
+         //assert on read that the current processor is in the SHARED state
+         for(int i = 0; i < NUM_PROCESSORS; i ++){
+              if(i == ctid) assert(sharedCache[i]->checkState(address) == SHARED);
+              else assert(sharedCache[i]->checkState(address) != MODIFIED);
+          }
+        }
 
         address += accessBytes;
       } while (numOfBytes > 0);
+    }
+
+    //assert everything in the cache is valid
+    for(int i = 0; i < NUM_PROCESSORS; i ++){
+        assert(sharedCache[i]->checkValid());
     }
 
     printf("time:%d, processor:%d, misses=%d, accesses=%d\n"
