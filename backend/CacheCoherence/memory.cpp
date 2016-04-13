@@ -1,9 +1,11 @@
 #include "memory.hpp"
 
 Memory::Memory(){
-  ; //do nothing
+  int count = 0;
 }
 
-void flush (){
+void Memory::flush (){
+  int count = 0;
+  count ++;
   return;
 }
