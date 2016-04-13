@@ -60,6 +60,7 @@ class SimpleCache
     cache_line *addressToCacheline(uint64_t address);
     void updateStatus(request_t request, uint64_t addr);
     cache_state checkState(uint64_t addr);
+    bool checkValid();
 };
 
 
