@@ -10,7 +10,7 @@ class CacheCoherence
 {
   public:
     virtual void run();
-    int timer;
+    Time *timer;
 
     TraceWrapper* tw;
     std::map <contech::ContextId, SimpleCache> contextCacheState;

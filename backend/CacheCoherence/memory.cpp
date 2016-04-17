@@ -1,11 +1,10 @@
 #include "memory.hpp"
 
-Memory::Memory(){
-  int count = 0;
+Memory::Memory(Time *t){
+  timer = t;
 }
 
 void Memory::flush (){
-  int count = 0;
-  count ++;
+  timer->time += 5;
   return;
 }

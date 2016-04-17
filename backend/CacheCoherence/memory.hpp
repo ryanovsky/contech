@@ -1,7 +1,10 @@
+#include "time.hpp"
+
 class Memory
 {
   public:
-    Memory();
+    Time *timer;
+    Memory(Time *);
     void flush(void);
 };
 

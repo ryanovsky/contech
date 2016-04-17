@@ -5,7 +5,6 @@
 #include <vector>
 #include <deque>
 #include <map>
-
 #include "TraceWrapper.hpp"
 
 enum cache_state {
@@ -52,7 +51,6 @@ class SimpleCache
     static const uint64_t global_b = 6;
     uint64_t global_s;
     int core_num;
-    //Memory *mem;
 
     SimpleCache();
     SimpleCache(uint64_t, uint64_t);

@@ -4,9 +4,9 @@
 using namespace contech;
 
 CacheCoherence::CacheCoherence(char *fname, uint64_t c, uint64_t s){
-  timer = 0;
+  timer = new Time();
   tw = new TraceWrapper(fname); //use trace wrapper to order all memory actions
-  Memory *mem = new Memory();
+  Memory *mem = new Memory(timer);
 
   for(int i = 0; i < NUM_PROCESSORS; i ++){
     sharedCache[i] = new SimpleCache(c, s, i);
@@ -15,7 +15,7 @@ CacheCoherence::CacheCoherence(char *fname, uint64_t c, uint64_t s){
     (p_stats[i])->misses = 0;
     visited[i] = false;
   }
-  interconnect = new Bus(sharedCache, mem);
+  interconnect = new Bus(sharedCache, mem, timer);
 }
 
 void CacheCoherence::run()
@@ -32,6 +32,15 @@ void CacheCoherence::run()
     bool shared = false;
     unsigned int memOpPos = 0;
     unsigned long int lastBBID = mrc.bbid;
+
+    if (visited[ctid]){
+      timer->time++;
+      for(int i = 0; i < NUM_PROCESSORS; i++){
+        visited[i] = false;
+      }
+    }
+    visited[ctid] = true;
+
 
     for (auto iReq = mrc.mav.begin(), eReq = mrc.mav.end(); iReq != eReq; ++iReq, memOpPos++)
     {
@@ -76,18 +85,9 @@ void CacheCoherence::run()
             if(sharedCache[ctid]->checkState(srcAddress) == INVALID){
               req = BUSRD;
               req_result = interconnect->sendMsgToBus(ctid, req, srcAddress);
-              timer++;
             }
 
             shared = interconnect->shared;
-            /*
-            for(int i = 0; i < NUM_PROCESSORS; i ++){
-              if(i != ctid){
-                  if(sharedCache[i]->checkState(srcAddress) == SHARED) shared = true;
-              }
-            }
-            */
-
 
             (sharedCache[ctid])->updateCache(false, accessSize, srcAddress, p_stats[ctid], shared);
             srcAddress += accessSize;
@@ -102,16 +102,8 @@ void CacheCoherence::run()
           sharedCache[ctid]->checkState(dstAddress) == SHARED){
             req = BUSRDX;
             req_result = interconnect->sendMsgToBus(ctid, req, dstAddress);
-            timer++;
           }
           shared = interconnect->shared;
-          /*
-          for(int i = 0; i < NUM_PROCESSORS; i ++){
-              if(i != ctid){
-                  if(sharedCache[i]->checkState(dstAddress) == SHARED) shared = true;
-              }
-          }
-          */
           (sharedCache[ctid])->updateCache(true, accessSize, dstAddress, p_stats[ctid], shared);
           for(int i = 0; i < NUM_PROCESSORS; i ++){
               if(i == ctid) assert(sharedCache[i]->checkState(dstAddress) == MODIFIED);
@@ -150,16 +142,8 @@ void CacheCoherence::run()
         if(sharedCache[ctid]->checkState(address) == INVALID ||
            (sharedCache[ctid]->checkState(address) == SHARED && rw == true)){
             req_result = interconnect->sendMsgToBus(ctid, req, address);
-            timer++;
         }
         shared = interconnect->shared;
-        /*
-          for(int i = 0; i < NUM_PROCESSORS; i ++){
-              if(i != ctid){
-                  if(sharedCache[i]->checkState(address) == SHARED) shared = true;
-              }
-          }
-        */
 
         (sharedCache[ctid])->updateCache(rw, accessBytes, address, p_stats[ctid], shared);
         if(rw){
@@ -188,7 +172,7 @@ void CacheCoherence::run()
     }
 
     printf("time:%d, processor:%d, misses=%d, accesses=%d\n"
-        ,timer, ctid, p_stats[ctid]->misses, p_stats[ctid]->accesses);
+        ,timer->time, ctid, p_stats[ctid]->misses, p_stats[ctid]->accesses);
     //prev_ctid = ctid;
   }
 
