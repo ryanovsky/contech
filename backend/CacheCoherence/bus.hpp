@@ -6,6 +6,7 @@
 class Bus
 {
   public:
+    bool shared, dirty, snoop_pending;
     Memory *mem;
     SimpleCache *caches[];
 

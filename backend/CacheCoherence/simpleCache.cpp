@@ -190,7 +190,6 @@ bool SimpleCache::updateStatus(request_t request, uint64_t addr){
           //mem->flush();
           flush = true;
         }
-        uint64_t idx = addr >> global_b;
         it->state = INVALID;
         //remove this from the cache
         cacheBlocks[idx].erase(it);

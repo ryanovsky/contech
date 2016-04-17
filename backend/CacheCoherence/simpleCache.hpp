@@ -7,7 +7,6 @@
 #include <map>
 
 #include "TraceWrapper.hpp"
-//#include "memory.hpp"
 
 enum cache_state {
   MODIFIED,
@@ -66,33 +65,5 @@ class SimpleCache
     cache_state checkState(uint64_t addr);
     bool checkValid();
 };
-
-
-/*
-struct mallocStats
-{
-    uint32_t bbid;
-    uint32_t size;
-    uint32_t misses;
-};
-
-class SimpleCacheBackend  : public contech::Backend
-{
-    SimpleCache* sharedCache;
-    std::map <contech::ContextId, SimpleCache> contextCacheState;
-    std::map <uint64_t, unsigned int> basicBlockMisses;
-    std::map <uint64_t, mallocStats> allocBlocks;
-    cache_stats_t* p_stats;
-    bool printMissLines;
-
-public:
-    virtual void resetBackend();
-    virtual void updateBackend(contech::Task*);
-    virtual void updateBackend(MemReqContainer&);
-    virtual void completeBackend(FILE*, contech::TaskGraphInfo*);
-
-    SimpleCacheBackend(uint64_t c, uint64_t s, int printMissLoc);
-};
-*/
 
 #endif
