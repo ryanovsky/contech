@@ -160,7 +160,7 @@ bool SimpleCache::updateCache(bool write, char numOfBytes, uint64_t address, cac
   {
     if (write) {write_misses++;}
     else {read_misses++;}
-    p_stats->misses ++;
+    p_stats->misses++;
 
     return false;
   }
@@ -187,7 +187,6 @@ bool SimpleCache::updateStatus(request_t request, uint64_t addr){
       inCache = true;
       if (request == BUSRDX){
         if (it->state == MODIFIED){
-          //mem->flush();
           flush = true;
         }
         it->state = INVALID;
@@ -196,7 +195,6 @@ bool SimpleCache::updateStatus(request_t request, uint64_t addr){
       }
       else if (request == BUSRD){
         if (it->state == MODIFIED){
-          //mem->flush();
           flush = true;
         }
         it->state = SHARED;

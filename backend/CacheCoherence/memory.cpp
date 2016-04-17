@@ -4,7 +4,10 @@ Memory::Memory(Time *t){
   timer = t;
 }
 
-void Memory::flush (){
+void Memory::flush(){
   timer->time += 5;
-  return;
+}
+
+void Memory::load(){
+  timer->time += 5;
 }

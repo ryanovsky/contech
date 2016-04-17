@@ -6,5 +6,6 @@ class Memory
     Time *timer;
     Memory(Time *);
     void flush(void);
+    void load(void);
 };
 

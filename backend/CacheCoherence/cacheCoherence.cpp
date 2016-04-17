@@ -89,7 +89,8 @@ void CacheCoherence::run()
 
             shared = interconnect->shared;
 
-            (sharedCache[ctid])->updateCache(false, accessSize, srcAddress, p_stats[ctid], shared);
+            if (!(sharedCache[ctid])->updateCache(false, accessSize, srcAddress, p_stats[ctid], shared))
+              interconnect->mem->load();
             srcAddress += accessSize;
             (p_stats[ctid])->accesses ++;
             for(int i = 0; i < NUM_PROCESSORS; i ++){
@@ -104,7 +105,8 @@ void CacheCoherence::run()
             req_result = interconnect->sendMsgToBus(ctid, req, dstAddress);
           }
           shared = interconnect->shared;
-          (sharedCache[ctid])->updateCache(true, accessSize, dstAddress, p_stats[ctid], shared);
+          if (!(sharedCache[ctid])->updateCache(true, accessSize, dstAddress, p_stats[ctid], shared))
+            interconnect->mem->load();
           for(int i = 0; i < NUM_PROCESSORS; i ++){
               if(i == ctid) assert(sharedCache[i]->checkState(dstAddress) == MODIFIED);
               else assert(sharedCache[i]->checkState(dstAddress) == INVALID);
@@ -145,7 +147,8 @@ void CacheCoherence::run()
         }
         shared = interconnect->shared;
 
-        (sharedCache[ctid])->updateCache(rw, accessBytes, address, p_stats[ctid], shared);
+        if (!(sharedCache[ctid])->updateCache(rw, accessBytes, address, p_stats[ctid], shared))
+          interconnect->mem->load();
         if(rw){
          for(int i = 0; i < NUM_PROCESSORS; i ++){
               //printf (" cache %d is writing: state[%d]:%d\n",ctid, i, sharedCache[i]->checkState(address));
