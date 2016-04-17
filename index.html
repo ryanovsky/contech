@@ -1,67 +1,89 @@
 <!DOCTYPE html>
 <html>
+
   <head>
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+    <meta name="description" content="Contech : High-Performance, Parallel Program Instrumentation">
 
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 
-    <title>Contech by bprail</title>
+    <title>Contech</title>
   </head>
 
   <body>
-    <header>
-      <div class="inner">
-        <h1>Contech</h1>
-        <h2>High-Performance, Parallel Program Instrumentation</h2>
-        <a href="https://github.com/bprail/contech" class="button"><small>View project on</small> GitHub</a>
-      </div>
-    </header>
 
-    <div id="content-wrapper">
-      <div class="inner clearfix">
-        <section id="main-content">
-          <p>Contech is a compiler-based (specifically <a href="http://llvm.org">LLVM</a>) instrumentation, designed to efficiently record the execution trace, memory accesses, and parallel interactions of a program.  The instrumentation has been tested across programs written in C, C++, and Fortran, as well as those using pthreads, OpenMP, and MPI.</p>
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/ryanovsky/contech">View on GitHub</a>
+
+          <h1 id="project_title">Contech</h1>
+          <h2 id="project_tagline">High-Performance, Parallel Program Instrumentation</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/ryanovsky/contech/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/ryanovsky/contech/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h3>
+<a id="summary" class="anchor" href="#summary" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Summary</h3>
+
+<p>We are going to implement a backend application for Contech that will simulate the MESI protocol with a variable number of cores in a processor, as well as transactional memory using the lazy optimistic scheme. We will then use our simulation to measure bus traffic and contention, as well as transactional memory commits and aborts.</p>
+
+<h3>
+<a id="schedule" class="anchor" href="#schedule" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Schedule</h3>
+
+<p>This schedule is not complete. We will talk to Professor Railing on Tuesday at 3, to discuss goals and objectives.  Updates will come after
+April 4-10: Contech Research and basic MSI for quad-core
+April 11-17: Implemented MESI
+April 18-24: Implement Transactional Memory</p>
+
+<h3>
+<a id="completed-work-so-far" class="anchor" href="#completed-work-so-far" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Completed work so far</h3>
+
+<p>We have learned how to use Contech.  Initially, our simulation traverses a contech TaskGraph and orders the memory requests based on when they would be completed.  We then begin simulating the MESI protocol, by sending requests to the bus, which updates the state of all the caches.  Once the bus returns, then the given memory request can be put in the owners cache.  As of now, we arbitrarily chose how many clock cycles each event will take.  These events include a memory flush, memory load, and L1 cache hit.</p>
+
+<p>We are half way done, and in a good spot for our deliverables. We just have to add a second part to our project (will be figured out after meeting with Railing, either transactional memory or split-transaction bus).</p>
+
+<p>We do not expect to come across any unknown challenges, we believe it is just a matter of coding.  However, unexpected challenges may always arrive.</p>
+
+<h3>
+<a id="results" class="anchor" href="#results" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Results</h3>
+
+<p>Our results will be a couple of graphs and analysis, of hits and misses over time created from different Contech TaskGraphs. </p>
+
+<h3>
+<a id="general-contech-info" class="anchor" href="#general-contech-info" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>General Contech info</h3>
+
+<p>Contech is a compiler-based (specifically <a href="http://llvm.org">LLVM</a>) instrumentation, designed to efficiently record the execution trace, memory accesses, and parallel interactions of a program.  The instrumentation has been tested across programs written in C, C++, and Fortran, as well as those using pthreads, OpenMP, and MPI.</p>
 
 <p>Contech is documented in the <a href="https://github.com/bprail/contech/wiki/Contech">wiki</a>.</p>
 
-<h3>
-<a id="authors-and-contributors" class="anchor" href="#authors-and-contributors" aria-hidden="true"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
+<p>Authors and Contributors
+<a href="https://github.com/bprail" class="user-mention">@bprail</a> is the software architect of this project.  Contributions have also been made by <a href="https://github.com/ehein6" class="user-mention">@ehein6</a>.  Additional components have been provided by <a href="https://github.com/caparrov" class="user-mention">@caparrov</a>.</p>
 
-<p><a href="https://github.com/bprail" class="user-mention">@bprail</a> is the software architect of this project.  Contributions have also been made by <a href="https://github.com/ehein6" class="user-mention">@ehein6</a>.  Additional components have been provided by <a href="https://github.com/caparrov" class="user-mention">@caparrov</a>.</p>
-
-<h3>
-<a id="publication" class="anchor" href="#publication" aria-hidden="true"><span class="octicon octicon-link"></span></a>Publication</h3>
-
-<p>Contech has appeared in the journal, <a href="http://dx.doi.org/10.1145/2776893">ACM Transactions on Architecture and Code Optimization</a>.</p>
+<p>Publication
+Contech has appeared in the journal, <a href="http://dx.doi.org/10.1145/2776893">ACM Transactions on Architecture and Code Optimization</a>.</p>
 
 <p>Contech appeared as a tutorial at <a href="http://www.iiswc.org/iiswc2015/index.html">IISWC 2015</a>.</p>
-        </section>
-
-        <aside id="sidebar">
-          <a href="https://github.com/bprail/contech/zipball/master" class="button">
-            <small>Download</small>
-            .zip file
-          </a>
-          <a href="https://github.com/bprail/contech/tarball/master" class="button">
-            <small>Download</small>
-            .tar.gz file
-          </a>
-
-          <p class="repo-owner"><a href="https://github.com/bprail/contech"></a> is maintained by <a href="https://github.com/bprail">bprail</a>.</p>
-
-          <p>This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the Architect theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.</p>
-        </aside>
-      </div>
+      </section>
     </div>
 
-  
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Contech maintained by <a href="https://github.com/ryanovsky">ryanovsky</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
   </body>
 </html>
