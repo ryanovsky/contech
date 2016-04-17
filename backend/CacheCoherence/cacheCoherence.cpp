@@ -72,10 +72,12 @@ void CacheCoherence::run()
           bytesToAccess -= accessSize;
           if (srcAddress != 0)
           {
-            // broadcast to bus about stuff
-            req = BUSRD;
-            req_result = interconnect->sendMsgToBus(ctid, req, srcAddress);
-            timer++;
+            // broadcast to bus if invalid state
+            if(sharedCache[ctid]->checkState(srcAddress) == INVALID){
+              req = BUSRD;
+              req_result = interconnect->sendMsgToBus(ctid, req, srcAddress);
+              timer++;
+            }
 
             shared = false;
             for(int i = 0; i < NUM_PROCESSORS; i ++){
@@ -93,9 +95,13 @@ void CacheCoherence::run()
               else assert(sharedCache[i]->checkState(srcAddress) != MODIFIED);
             }
           }
-          req = BUSRDX;
-          req_result = interconnect->sendMsgToBus(ctid, req, dstAddress);
-          timer++;
+          //if in invalid or shared state
+          if(sharedCache[ctid]->checkState(dstAddress) == INVALID ||
+          sharedCache[ctid]->checkState(dstAddress) == SHARED){
+            req = BUSRDX;
+            req_result = interconnect->sendMsgToBus(ctid, req, dstAddress);
+            timer++;
+          }
           shared = false;
           for(int i = 0; i < NUM_PROCESSORS; i ++){
               if(i != ctid){
@@ -136,8 +142,12 @@ void CacheCoherence::run()
           req = BUSRD;
         }
 
-        req_result = interconnect->sendMsgToBus(ctid, req, address);
-        timer++;
+        // only send message too bus if (shared and write) or invalid
+        if(sharedCache[ctid]->checkState(address) == INVALID ||
+           (sharedCache[ctid]->checkState(address) == SHARED && rw == true)){
+            req_result = interconnect->sendMsgToBus(ctid, req, address);
+            timer++;
+        }
         shared = false;
           for(int i = 0; i < NUM_PROCESSORS; i ++){
               if(i != ctid){
