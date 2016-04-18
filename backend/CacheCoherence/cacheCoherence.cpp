@@ -94,6 +94,7 @@ void CacheCoherence::run()
             srcAddress += accessSize;
             (p_stats[ctid])->accesses ++;
             for(int i = 0; i < NUM_PROCESSORS; i ++){
+              if(srcAddress == 5275376)
               if(i == ctid) assert(sharedCache[i]->checkState(srcAddress) == SHARED);
               else assert(sharedCache[i]->checkState(srcAddress) != MODIFIED);
             }
@@ -151,7 +152,6 @@ void CacheCoherence::run()
           interconnect->mem->load();
         if(rw){
          for(int i = 0; i < NUM_PROCESSORS; i ++){
-              //printf (" cache %d is writing: state[%d]:%d\n",ctid, i, sharedCache[i]->checkState(address));
               //assert on write that the current processor is in the MODIFIED state alone
               if(i == ctid) assert(sharedCache[i]->checkState(address) == MODIFIED);
               else assert(sharedCache[i]->checkState(address) == INVALID);
@@ -179,7 +179,6 @@ void CacheCoherence::run()
     //prev_ctid = ctid;
   }
 
-  printf("ready for cleanup in run\n");
   // delete tw;
   // delete sharedCache;
   // delete p_stats;

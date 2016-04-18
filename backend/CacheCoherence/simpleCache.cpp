@@ -70,8 +70,9 @@ bool SimpleCache::updateCacheLine(uint64_t idx, uint64_t tag, uint64_t offset, u
     {
       it->dirty = (it->dirty || write);
       it->lastAccess = num;
-
-      if (write) it->state = MODIFIED;
+      if (write) {
+          it->state = MODIFIED;
+      }
       //else it->state = SHARED;
       return true;
     }
@@ -82,7 +83,6 @@ bool SimpleCache::updateCacheLine(uint64_t idx, uint64_t tag, uint64_t offset, u
       oldest = it;
     }
   }
-
   // The block is not in the cache
   //   First check if there is space to place it in the cache
   if (cacheBlocks[idx].size() < (0x1<<global_s))
@@ -113,7 +113,11 @@ bool SimpleCache::updateCacheLine(uint64_t idx, uint64_t tag, uint64_t offset, u
 
   {
     cache_line t;
-
+    if (write) t.state = MODIFIED;
+    else{
+        if(shared) t.state = SHARED;
+        else t.state = EXCLUSIVE;
+    }
     t.tag = tag;
     t.dirty = write;
     t.lastAccess = num;
