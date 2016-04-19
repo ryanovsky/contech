@@ -34,29 +34,31 @@
         <h3>
 <a id="summary" class="anchor" href="#summary" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Summary</h3>
 
-<p>We are going to implement a backend application for Contech that will simulate the MESI protocol with a variable number of cores in a processor, as well as transactional memory using the lazy optimistic scheme. We will then use our simulation to measure bus traffic and contention, as well as transactional memory commits and aborts.</p>
+<p>We are going to implement a backend application for Contech that will simulate the MESI protocol on a split transaction bus. We will then use our simulation to measure bus traffic and contention.</p>
 
 <h3>
 <a id="schedule" class="anchor" href="#schedule" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Schedule</h3>
 
-<p>This schedule is not complete. We will talk to Professor Railing on Tuesday at 3, to discuss goals and objectives.  Updates will come after
-April 4-10: Contech Research and basic MSI for quad-core
-April 11-17: Implemented MESI
-April 18-24: Implement Transactional Memory</p>
+<p>April 4-10: Contech Research and basic MSI for quad-core
+April 11-17: Implement MESI
+April 18-20: Change the ordering that memory goes to the bus
+April 21-26: Split transaction
+April 27 - May 2: Implement a ring interconnect 
+May 3- 9: Create a presentation, do analysis, compare the ring to the split transaction memory bus</p>
 
 <h3>
 <a id="completed-work-so-far" class="anchor" href="#completed-work-so-far" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Completed work so far</h3>
 
 <p>We have learned how to use Contech.  Initially, our simulation traverses a contech TaskGraph and orders the memory requests based on when they would be completed.  We then begin simulating the MESI protocol, by sending requests to the bus, which updates the state of all the caches.  Once the bus returns, then the given memory request can be put in the owners cache.  As of now, we arbitrarily chose how many clock cycles each event will take.  These events include a memory flush, memory load, and L1 cache hit.</p>
 
-<p>We are half way done, and in a good spot for our deliverables. We just have to add a second part to our project (will be figured out after meeting with Railing, either transactional memory or split-transaction bus).</p>
+<p>We still have a lot of work that needs to be done.  First we have to reorder the way that memory is sent to the bus.  We have to implement a split transaction bus, and then look into creating a ring bus as well.</p>
 
-<p>We do not expect to come across any unknown challenges, we believe it is just a matter of coding.  However, unexpected challenges may always arrive.</p>
+<p>We do not expect to come across any unknown challenges, but we still have to look into a ring bus in more detail, we believe it is just a matter of coding.  After we finish implementing the split transaction bus, we may choose to not do the ring bus but instead do directory based cache coherence (we do not want to lock ourselves into the ring idea).</p>
 
 <h3>
 <a id="results" class="anchor" href="#results" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Results</h3>
 
-<p>Our results will be a couple of graphs and analysis, of hits and misses over time created from different Contech TaskGraphs. </p>
+<p>Our results will be a set of graphs and analysis, of hits and misses over time created from different Contech TaskGraphs. </p>
 
 <h3>
 <a id="general-contech-info" class="anchor" href="#general-contech-info" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>General Contech info</h3>
