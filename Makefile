@@ -5,6 +5,7 @@ common/taskLib \
 backend/CommTracker \
 backend/Statistics \
 backend/Comm2 \
+backend/CacheCoherence \
 backend/TaskGraphFrontEnd \
 backend/Heltech \
 backend/Harmony \
@@ -19,7 +20,7 @@ backend/TaskGraphVisualizer \
 MAKE_DIRS = $(CLEAN_DIRS)
 
 
-all: multimake 
+all: multimake
 
 multimake:
 	for d in $(MAKE_DIRS);	\
