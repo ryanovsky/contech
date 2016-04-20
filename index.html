@@ -39,11 +39,11 @@
 <h3>
 <a id="schedule" class="anchor" href="#schedule" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Schedule</h3>
 
-<p>April 4-10: Contech Research and basic MSI for quad-core
-<p>April 11-17: Implement MESI
-<p>April 18-20: Change the ordering that memory goes to the bus
-<p>April 21-26: Split transaction
-<p>April 27 - May 2: Implement a ring interconnect 
+<p>April 4-10: Contech Research and basic MSI for quad-core</p>
+<p>April 11-17: Implement MESI</p>
+<p>April 18-20: Change the ordering that memory goes to the bus</p>
+<p>April 21-26: Split transaction</p>
+<p>April 27 - May 2: Implement a ring interconnect </p>
 <p>May 3- 9: Create a presentation, do analysis, compare the ring to the split transaction memory bus</p>
 
 <h3>
@@ -55,10 +55,11 @@
 
 <p>We do not expect to come across any unknown challenges, but we still have to look into a ring bus in more detail, we believe it is just a matter of coding.  After we finish implementing the split transaction bus, we may choose to not do the ring bus but instead do directory based cache coherence (we do not want to lock ourselves into the ring idea).</p>
 
+<p> We chose to move away from our initial idea of having transactional memory.  Instead we are implementing a split-transaction bus, which we are then going to make into a ring.  The transactional memory was not feasible, because most systems do not support it.</p>
 <h3>
 <a id="results" class="anchor" href="#results" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Results</h3>
 
-<p>Our results will be a set of graphs and analysis, of hits and misses over time created from different Contech TaskGraphs. </p>
+<p>Our results will be a set of graphs and analysis, of hits and misses over time created from different Contech TaskGraphs. The time taken for each memory request to commit will be the main focus.</p>
 
 <h3>
 <a id="general-contech-info" class="anchor" href="#general-contech-info" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>General Contech info</h3>
