@@ -71,7 +71,7 @@ bool SimpleCache::updateCacheLine(uint64_t idx, uint64_t tag, uint64_t offset, u
       it->dirty = (it->dirty || write);
       it->lastAccess = num;
       if (write) {
-          it->state = MODIFIED;
+        it->state = MODIFIED;
       }
       //else it->state = SHARED;
       return true;
@@ -94,8 +94,8 @@ bool SimpleCache::updateCacheLine(uint64_t idx, uint64_t tag, uint64_t offset, u
     t.lastAccess = num;
     if (write) t.state = MODIFIED;
     else{
-        if(shared) t.state = SHARED;
-        else t.state = EXCLUSIVE;
+      if(shared) t.state = SHARED;
+      else t.state = EXCLUSIVE;
     }
 
     cacheBlocks[idx].push_back(t);
@@ -115,8 +115,8 @@ bool SimpleCache::updateCacheLine(uint64_t idx, uint64_t tag, uint64_t offset, u
     cache_line t;
     if (write) t.state = MODIFIED;
     else{
-        if(shared) t.state = SHARED;
-        else t.state = EXCLUSIVE;
+      if(shared) t.state = SHARED;
+      else t.state = EXCLUSIVE;
     }
     t.tag = tag;
     t.dirty = write;
@@ -235,7 +235,7 @@ bool SimpleCache::checkValid(){
   for(int idx = 0; idx < cacheBlocks.size(); idx ++){
     for (auto it = cacheBlocks[idx].begin(), et = cacheBlocks[idx].end(); it != et; ++it)
     {
-        if(it->state == INVALID) return false;
+      if(it->state == INVALID) return false;
     }
   }
   return true;
