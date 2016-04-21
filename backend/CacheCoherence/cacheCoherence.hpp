@@ -12,7 +12,7 @@ class CacheCoherence
     virtual void run();
     Time *timer;
 
-    TraceWrapper* tw;
+    GraphTraverse* gt;
     std::map <contech::ContextId, SimpleCache> contextCacheState;
     SimpleCache * sharedCache[NUM_PROCESSORS];
     cache_stats_t * p_stats[NUM_PROCESSORS];

@@ -5,7 +5,7 @@
 #include <vector>
 #include <deque>
 #include <map>
-#include "TraceWrapper.hpp"
+#include "graphTraverse.hpp"
 
 enum cache_state {
   MODIFIED,

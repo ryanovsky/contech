@@ -5,7 +5,7 @@ using namespace contech;
 
 CacheCoherence::CacheCoherence(char *fname, uint64_t c, uint64_t s){
   timer = new Time();
-  tw = new TraceWrapper(fname); //use trace wrapper to order all memory actions
+  gt = new GraphTraverse(fname);
   Memory *mem = new Memory(timer);
 
   for(int i = 0; i < NUM_PROCESSORS; i ++){
@@ -26,8 +26,8 @@ void CacheCoherence::run()
   request_t req;
   int req_result;
 
-  while (tw->getNextMemoryRequest(mrc)) {
-    ctid = (uint32_t)(mrc.ctid) - 1;
+  while (gt->getNextMemoryRequest(mrc)) {
+    ctid = (uint32_t)(mrc.ctid);
     bool rw = false;
     bool shared = false;
     unsigned int memOpPos = 0;
@@ -174,10 +174,16 @@ void CacheCoherence::run()
         assert(sharedCache[i]->checkValid());
     }
 
-    printf("time:%d, processor:%d, misses=%d, accesses=%d\n"
-        ,timer->time, ctid, p_stats[ctid]->misses, p_stats[ctid]->accesses);
+    //printf("time:%d, processor:%d, misses=%d, accesses=%d\n"
+    //    ,timer->time, ctid, p_stats[ctid]->misses, p_stats[ctid]->accesses);
     //prev_ctid = ctid;
   }
+  int accesses = 0;
+  for(int i = 0; i < NUM_PROCESSORS; i ++){
+    printf("cache %d accesses:%d, misses:%d\n", i, (p_stats[i])->accesses, (p_stats[i])->misses);
+    accesses = accesses + (p_stats[i])->accesses;
+  }
+  printf("total access:%d total time:%d \n", accesses, time);
 
   // delete tw;
   // delete sharedCache;
