@@ -142,26 +142,41 @@ void CacheCoherence::run()
         }
 
         // only send message too bus if (shared and write) or invalid
+        bool send_mesg = false;
+        cache_state came_from = sharedCache[ctid]->checkState(address);
         if(sharedCache[ctid]->checkState(address) == INVALID ||
             (sharedCache[ctid]->checkState(address) == SHARED && rw == true)){
           req_result = interconnect->sendMsgToBus(ctid, req, address);
+          send_mesg = true;
         }
         shared = interconnect->shared;
-
         if (!(sharedCache[ctid])->updateCache(rw, accessBytes, address, p_stats[ctid], shared))
           interconnect->mem->load();
         if(rw){
           for(int i = 0; i < NUM_PROCESSORS; i ++){
             //assert on write that the current processor is in the MODIFIED state alone
             if(i == ctid) assert(sharedCache[i]->checkState(address) == MODIFIED);
-            else assert(sharedCache[i]->checkState(address) == INVALID);
+            else {
+
+                //if(sharedCache[i]->checkState(address) != INVALID) printf("state = %d\n, came_from=%d send_msg=%d\n", sharedCache[i]->checkState(address), came_from, send_mesg);
+                assert(sharedCache[i]->checkState(address) == INVALID);
+            }
           }
         }
         else{
-          //assert on read that the current processor is in the SHARED state
+          //assert on read that no other processor is in the MODIFIED STATE
           for(int i = 0; i < NUM_PROCESSORS; i ++){
             if(i == ctid); //assert(sharedCache[i]->checkState(address) == SHARED);
             else assert(sharedCache[i]->checkState(address) != MODIFIED);
+          }
+          //if a processor moved into EXCLUSIVE, assert others aren't in shared
+          if(sharedCache[ctid]->checkState(address) == EXCLUSIVE){
+            for(int i = 0; i < NUM_PROCESSORS; i ++){
+                if(i == ctid); //assert(sharedCache[i]->checkState(address) == SHARED);
+                else {
+                    assert(sharedCache[i]->checkState(address) != SHARED);
+                }
+            }
           }
         }
 
@@ -183,13 +198,13 @@ void CacheCoherence::run()
     printf("cache %d accesses:%d, misses:%d\n", i, (p_stats[i])->accesses, (p_stats[i])->misses);
     accesses = accesses + (p_stats[i])->accesses;
   }
-  printf("total access:%d total time:%d \n", accesses, time);
+  printf("total access:%d total time:%d \n", accesses, timer->time);
 
-  // delete tw;
-  // delete sharedCache;
-  // delete p_stats;
-  // for(int i = 0; i < NUM_PROCESSORS; i ++){
-  //   delete sharedCache[i];
-  //   delete p_stats[i];
-  // }
+  //delete gt;
+  //delete mem;
+  //delete interconnect;
+  for(int i = 0; i < NUM_PROCESSORS; i ++){
+     delete sharedCache[i];
+     delete p_stats[i];
+   }
 }
