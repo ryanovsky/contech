@@ -38,7 +38,7 @@ int GraphTraverse::getNextMemoryRequest(MemReqContainer &nextReq)
           done = true;
         }
     }
-    nextReq = memReqQ.top();
+    nextReq = memReqQ.front();
     memReqQ.pop();
 
     return 1;

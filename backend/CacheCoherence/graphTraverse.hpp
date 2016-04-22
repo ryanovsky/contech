@@ -29,12 +29,6 @@ public:
     unsigned int bbid;
     unsigned int ctid;
     unsigned int pushedOps;
-
-    bool operator()( MemReqContainer &t1, MemReqContainer &t2)
-    {
-        //return t1.reqTime > t2.reqTime;
-        return 1;
-    }
 };
 
 class GraphTraverse
@@ -45,8 +39,7 @@ public:
 
     bool done;
     contech::TaskGraph* tg;
-    //std::queue <MemReqContainer, deque<MemReqContainer>> memReqQ;
-    std::priority_queue <MemReqContainer, vector<MemReqContainer>, MemReqContainer> memReqQ;
+    std::queue <MemReqContainer, deque<MemReqContainer>> memReqQ;
     map<contech::ContextId, ctid_current_state*> contechState;
 
     int populateQueue();
