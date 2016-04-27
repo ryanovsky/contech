@@ -9,7 +9,7 @@ class Bus
     bool shared, dirty, snoop_pending;
     Time *timer;
     Memory *mem;
-    SimpleCache *caches[];
+    SimpleCache *caches[NUM_PROCESSORS];
 
     Bus(SimpleCache *c[], Memory *, Time *);
 

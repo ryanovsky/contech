@@ -10,7 +10,7 @@ CacheCoherence::CacheCoherence(char *fname, uint64_t c, uint64_t s){
 
   for(int i = 0; i < NUM_PROCESSORS; i ++){
     sharedCache[i] = new SimpleCache(c, s, i);
-    p_stats[i] = new cache_stats_t;
+    p_stats[i] = (cache_stats_t *) malloc(sizeof(struct cache_stats_t));
     (p_stats[i])->accesses = 0;
     (p_stats[i])->misses = 0;
     visited[i] = false;
@@ -27,7 +27,7 @@ void CacheCoherence::run()
   int req_result;
 
   while (gt->getNextMemoryRequest(mrc)) {
-    printf("enter while loop\n");
+    //printf("enter while loop\n");
     ctid = (uint32_t)(mrc.ctid);
     bool rw = false;
     bool shared = false;

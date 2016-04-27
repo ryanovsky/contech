@@ -21,7 +21,7 @@ class SplitBus
     Time *timer;
     Memory *mem;
     struct requestTableElem *reqs;
-    SimpleCache *caches[];
+    SimpleCache *caches[NUM_PROCESSORS];
 
     SplitBus(SimpleCache *c[], Memory *, Time *);
 
