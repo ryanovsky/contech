@@ -41,45 +41,9 @@ struct requestTableElem *SplitBus::sendMsgToBus(int core_num, request_t request,
   reqs[next_tag].req = request;
   num_requests++;
 
-  request_t retReq = NOTHING;
-  uint64_t retAddr = 0;
 
-  int i;
-  for (i = 0; i < MAX_OUTSTANDING_REQ; i++){
-    if (!reqs[i].done){
-      if (reqs[i].time < NUM_PROCESSORS)
-        reqs[i].time++;
-      else {
-        reqs[i].done = true;
-        num_requests--;
-        retReq = reqs[i].req;
-        retAddr = reqs[i].addr;
-        break;
-      }
-    }
-  }
+  struct requestTableElem *ret = NULL;
 
-  if (retReq == NOTHING)
-    return NULL;
-
-  for (int i = 0; i < NUM_PROCESSORS; i++){
-    if (i != reqs[i].core_num){
-      //update the status of the cache based on the message on the bus
-      if(caches[i]->updateStatus(retReq, retAddr)){
-        dirty = true;
-        mem->flush();
-        dirty = false;
-      }
-      shared = shared || (caches[i]->checkState(retAddr) == SHARED);
-    }
-  }
-
-  snoop_pending = false;
-  return &reqs[i];
-}
-
-struct requestTableElem *SplitBus::checkBusStatus(){
-  timer->time++;
   for (int i = 0; i < MAX_OUTSTANDING_REQ; i++){
     if (!reqs[i].done){
       if (reqs[i].time < NUM_PROCESSORS)
@@ -87,22 +51,62 @@ struct requestTableElem *SplitBus::checkBusStatus(){
       else {
         reqs[i].done = true;
         num_requests--;
-
-        for (int i = 0; i < NUM_PROCESSORS; i++){
-          if (i != reqs[i].core_num){
-            //update the status of the cache based on the message on the bus
-            if(caches[i]->updateStatus(reqs[i].req, reqs[i].addr)){
-              dirty = true;
-              mem->flush();
-              dirty = false;
-            }
-            shared = shared || (caches[i]->checkState(reqs[i].addr) == SHARED);
-          }
-        }
-
-        return &reqs[i];
+        ret = &reqs[i];
+        break;
       }
     }
   }
-  return NULL;
+
+  if (ret == NULL)
+    return NULL;
+
+  for (int i = 0; i < NUM_PROCESSORS; i++){
+    if (i != ret->core_num){
+      //update the status of the cache based on the message on the bus
+      if(caches[i]->updateStatus(ret->req, ret->addr)){
+        dirty = true;
+        mem->flush();
+        dirty = false;
+      }
+      shared = shared || (caches[i]->checkState(ret->addr) == SHARED);
+    }
+  }
+
+  snoop_pending = false;
+  return ret;
+}
+
+struct requestTableElem *SplitBus::checkBusStatus(){
+  timer->time++;
+
+  struct requestTableElem *ret = NULL;
+
+  for (int i = 0; i < MAX_OUTSTANDING_REQ; i++){
+    if (!reqs[i].done){
+      if (reqs[i].time < NUM_PROCESSORS)
+        reqs[i].time++;
+      else {
+        reqs[i].done = true;
+        num_requests--;
+        ret = &reqs[i];
+        break;
+      }
+    }
+  }
+
+  if (ret == NULL)
+    return NULL;
+
+  for (int i = 0; i < NUM_PROCESSORS; i++){
+    if (i != ret->core_num){
+      //update the status of the cache based on the message on the bus
+      if(caches[i]->updateStatus(ret->req, ret->addr)){
+        dirty = true;
+        mem->flush();
+        dirty = false;
+      }
+    }
+  }
+
+  return ret;
 }
