@@ -12,6 +12,7 @@ SplitBus::SplitBus(SimpleCache *c[], Memory *m, Time *t){
 
   next = 0;
   num_requests = 0;
+  reqs = (struct requestTableElem *) malloc(MAX_OUTSTANDING_REQ * sizeof(struct requestTableElem));
   for (int i = 0; i < MAX_OUTSTANDING_REQ; i++){
     reqs[i].done = true;
   }
@@ -59,11 +60,3 @@ int SplitBus::sendMsgToBus(int core_num, request_t request, uint64_t addr){
   snoop_pending = false;
   return 0;
 }
-
-/*
-// what happens when you get data back from memory
-int SplitBus::getFromMemory(int tag){
-  reqs[tag].done = true;
-  num_requests--;
-}
-*/

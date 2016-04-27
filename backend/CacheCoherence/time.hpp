@@ -1,6 +1,6 @@
 class Time
 {
   public:
-    int time;
+    unsigned int time;
     Time();
 };

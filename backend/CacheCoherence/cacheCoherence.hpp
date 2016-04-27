@@ -10,16 +10,16 @@
 class CacheCoherence
 {
   public:
-    virtual void run();
+    bool visited[NUM_PROCESSORS];
     Time *timer;
+    SplitBus *interconnect;
+    Memory *mem;
 
     GraphTraverse* gt;
     std::map <contech::ContextId, SimpleCache> contextCacheState;
     SimpleCache * sharedCache[NUM_PROCESSORS];
     cache_stats_t * p_stats[NUM_PROCESSORS];
-    bool visited[NUM_PROCESSORS];
-    SplitBus *interconnect;
 
-    //FSM stuff will go here
     CacheCoherence(char*, uint64_t, uint64_t s);
+    virtual void run();
 };

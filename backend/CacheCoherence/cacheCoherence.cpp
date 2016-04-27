@@ -6,7 +6,7 @@ using namespace contech;
 CacheCoherence::CacheCoherence(char *fname, uint64_t c, uint64_t s){
   timer = new Time();
   gt = new GraphTraverse(fname);
-  Memory *mem = new Memory(timer);
+  mem = new Memory(timer);
 
   for(int i = 0; i < NUM_PROCESSORS; i ++){
     sharedCache[i] = new SimpleCache(c, s, i);
@@ -27,6 +27,7 @@ void CacheCoherence::run()
   int req_result;
 
   while (gt->getNextMemoryRequest(mrc)) {
+    printf("enter while loop\n");
     ctid = (uint32_t)(mrc.ctid);
     bool rw = false;
     bool shared = false;
