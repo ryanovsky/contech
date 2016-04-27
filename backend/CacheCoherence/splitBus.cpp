@@ -18,8 +18,7 @@ SplitBus::SplitBus(SimpleCache *c[], Memory *m, Time *t){
   }
 }
 
-int SplitBus::sendMsgToBus(int core_num, request_t request, uint64_t addr){
-  //if (core_num == 0) timer->time++;
+uint64_t SplitBus::sendMsgToBus(int core_num, request_t request, uint64_t addr){
   timer->time++;
   snoop_pending = true;
 
@@ -42,21 +41,54 @@ int SplitBus::sendMsgToBus(int core_num, request_t request, uint64_t addr){
   reqs[next_tag].req = request;
   num_requests++;
 
+  request_t retReq = NOTHING;
+  uint64_t retAddr = 0;
+
+  int i;
+  for (i = 0; i < MAX_OUTSTANDING_REQ; i++){
+    if (!reqs[i].done){
+      if (reqs[i].time < NUM_PROCESSORS)
+        reqs[i].time++;
+      else {
+        reqs[i].done = true;
+        num_requests--;
+        retReq = reqs[i].req;
+        retAddr = reqs[i].addr;
+        break;
+      }
+    }
+  }
+
+  if (retReq == NOTHING)
+    return 0;
+
   for (int i = 0; i < NUM_PROCESSORS; i++){
-    if (i != core_num){
+    if (i != reqs[i].core_num){
       //update the status of the cache based on the message on the bus
-      if(caches[i]->updateStatus(request, addr)){
+      if(caches[i]->updateStatus(retReq, retAddr)){
         dirty = true;
         mem->flush();
         dirty = false;
       }
-      shared = shared || (caches[i]->checkState(addr) == SHARED);
+      shared = shared || (caches[i]->checkState(retAddr) == SHARED);
     }
   }
 
-  reqs[next_tag].done = true;
-  num_requests--;
-
   snoop_pending = false;
+  return retAddr;
+}
+
+uint64_t SplitBus::checkBusStatus(){
+  for (int i = 0; i < MAX_OUTSTANDING_REQ; i++){
+    if (!reqs[i].done){
+      if (reqs[i].time < NUM_PROCESSORS)
+        reqs[i].time++;
+      else {
+        reqs[i].done = true;
+        num_requests--;
+        return reqs[i].addr;
+      }
+    }
+  }
   return 0;
 }

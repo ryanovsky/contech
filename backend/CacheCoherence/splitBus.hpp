@@ -8,6 +8,7 @@ struct requestTableElem {
   bool done;
   int core_num;
   int tag;
+  int time;
   request_t req;
   uint64_t addr;
 };
@@ -26,6 +27,8 @@ class SplitBus
     SplitBus(SimpleCache *c[], Memory *, Time *);
 
     // returns success of write to bus
-    int sendMsgToBus(int core_num, request_t request, uint64_t addr);
+    uint64_t sendMsgToBus(int core_num, request_t request, uint64_t addr);
+    uint64_t checkBusStatus();
+
 };
 
