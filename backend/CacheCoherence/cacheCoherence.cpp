@@ -15,7 +15,7 @@ CacheCoherence::CacheCoherence(char *fname, uint64_t c, uint64_t s){
     (p_stats[i])->misses = 0;
     visited[i] = false;
   }
-  interconnect = new Bus(sharedCache, mem, timer);
+  interconnect = new SplitBus(sharedCache, mem, timer);
 }
 
 void CacheCoherence::run()
