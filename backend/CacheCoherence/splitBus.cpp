@@ -18,14 +18,14 @@ SplitBus::SplitBus(SimpleCache *c[], Memory *m, Time *t){
   }
 }
 
-uint64_t SplitBus::sendMsgToBus(int core_num, request_t request, uint64_t addr){
+struct requestTableElem *SplitBus::sendMsgToBus(int core_num, request_t request, uint64_t addr){
   timer->time++;
   snoop_pending = true;
 
   if (num_requests == MAX_OUTSTANDING_REQ){
     printf("Too many outstanding requests!\n");
     // NACK to core to retry this request later
-    return 1;
+    return NULL;
   }
 
   int next_tag = 0;
@@ -60,7 +60,7 @@ uint64_t SplitBus::sendMsgToBus(int core_num, request_t request, uint64_t addr){
   }
 
   if (retReq == NOTHING)
-    return 0;
+    return NULL;
 
   for (int i = 0; i < NUM_PROCESSORS; i++){
     if (i != reqs[i].core_num){
@@ -75,10 +75,11 @@ uint64_t SplitBus::sendMsgToBus(int core_num, request_t request, uint64_t addr){
   }
 
   snoop_pending = false;
-  return retAddr;
+  return &reqs[i];
 }
 
-uint64_t SplitBus::checkBusStatus(){
+struct requestTableElem *SplitBus::checkBusStatus(){
+  timer->time++;
   for (int i = 0; i < MAX_OUTSTANDING_REQ; i++){
     if (!reqs[i].done){
       if (reqs[i].time < NUM_PROCESSORS)
@@ -86,9 +87,22 @@ uint64_t SplitBus::checkBusStatus(){
       else {
         reqs[i].done = true;
         num_requests--;
-        return reqs[i].addr;
+
+        for (int i = 0; i < NUM_PROCESSORS; i++){
+          if (i != reqs[i].core_num){
+            //update the status of the cache based on the message on the bus
+            if(caches[i]->updateStatus(reqs[i].req, reqs[i].addr)){
+              dirty = true;
+              mem->flush();
+              dirty = false;
+            }
+            shared = shared || (caches[i]->checkState(reqs[i].addr) == SHARED);
+          }
+        }
+
+        return &reqs[i];
       }
     }
   }
-  return 0;
+  return NULL;
 }

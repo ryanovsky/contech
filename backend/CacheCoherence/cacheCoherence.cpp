@@ -24,7 +24,7 @@ void CacheCoherence::run()
   uint32_t ctid = 0;
   uint32_t prev_ctid = ctid;
   request_t req;
-  uint64_t req_result;
+  struct requestTableElem *req_result;
   bool sendMsg = false;
 
   while (gt->getNextMemoryRequest(mrc)) {
@@ -98,15 +98,16 @@ void CacheCoherence::run()
             shared = interconnect->shared;
 
             if (req_result){
-              if (!(sharedCache[ctid])->updateCache(false, accessSize, req_result, p_stats[ctid], shared))
+              bool write = req_result->req == BUSRDX;
+              int cn = req_result->core_num;
+              if (!(sharedCache[cn])->updateCache(write, accessSize, req_result->addr, p_stats[cn], shared))
                 interconnect->mem->load();
 
               srcAddress += accessSize;
-              (p_stats[ctid])->accesses ++;
+              (p_stats[cn])->accesses ++;
               for(int i = 0; i < NUM_PROCESSORS; i ++){
-                if(srcAddress == 5275376)
-                  if(i == ctid) assert(sharedCache[i]->checkState(srcAddress) == SHARED);
-                  else assert(sharedCache[i]->checkState(srcAddress) != MODIFIED);
+                  if(i == cn) assert(sharedCache[i]->checkState(req_result->addr) == SHARED);
+                  else assert(sharedCache[i]->checkState(req_result->addr) != MODIFIED);
               }
             }
             if (!sendMsg){
@@ -115,7 +116,6 @@ void CacheCoherence::run()
               srcAddress += accessSize;
               (p_stats[ctid])->accesses ++;
               for(int i = 0; i < NUM_PROCESSORS; i ++){
-                if(srcAddress == 5275376)
                   if(i == ctid) assert(sharedCache[i]->checkState(srcAddress) == SHARED);
                   else assert(sharedCache[i]->checkState(srcAddress) != MODIFIED);
               }
@@ -125,14 +125,34 @@ void CacheCoherence::run()
           if(sharedCache[ctid]->checkState(dstAddress) == INVALID ||
               sharedCache[ctid]->checkState(dstAddress) == SHARED){
             req = BUSRDX;
+            sendMsg = true;
             req_result = interconnect->sendMsgToBus(ctid, req, dstAddress);
           }
+          else {
+            sendMsg = false;
+            req_result = interconnect->checkBusStatus();
+            if (req_result) timer->time++;
+          }
+
           shared = interconnect->shared;
-          if (!(sharedCache[ctid])->updateCache(true, accessSize, dstAddress, p_stats[ctid], shared))
-            interconnect->mem->load();
-          for(int i = 0; i < NUM_PROCESSORS; i ++){
-            if(i == ctid) assert(sharedCache[i]->checkState(dstAddress) == MODIFIED);
-            else assert(sharedCache[i]->checkState(dstAddress) == INVALID);
+
+          if (req_result){
+            bool write = req_result->req == BUSRDX;
+            int cn = req_result->core_num;
+            if (!(sharedCache[cn])->updateCache(write, accessSize, req_result->addr, p_stats[cn], shared))
+              interconnect->mem->load();
+            for(int i = 0; i < NUM_PROCESSORS; i ++){
+              if(i == cn) assert(sharedCache[i]->checkState(req_result->addr) == MODIFIED);
+              else assert(sharedCache[i]->checkState(req_result->addr) == INVALID);
+            }
+          }
+          if (!sendMsg){
+            if (!(sharedCache[ctid])->updateCache(true, accessSize, dstAddress, p_stats[ctid], shared))
+              interconnect->mem->load();
+            for(int i = 0; i < NUM_PROCESSORS; i ++){
+              if(i == ctid) assert(sharedCache[i]->checkState(dstAddress) == MODIFIED);
+              else assert(sharedCache[i]->checkState(dstAddress) == INVALID);
+            }
           }
 
 
@@ -167,34 +187,75 @@ void CacheCoherence::run()
         cache_state came_from = sharedCache[ctid]->checkState(address);
         if(sharedCache[ctid]->checkState(address) == INVALID ||
             (sharedCache[ctid]->checkState(address) == SHARED && rw == true)){
+          sendMsg = true;
           req_result = interconnect->sendMsgToBus(ctid, req, address);
         }
-        shared = interconnect->shared;
-        if (!(sharedCache[ctid])->updateCache(rw, accessBytes, address, p_stats[ctid], shared))
-          interconnect->mem->load();
-        if(rw){
-          for(int i = 0; i < NUM_PROCESSORS; i ++){
-            //assert on write that the current processor is in the MODIFIED state alone
-            if(i == ctid) assert(sharedCache[i]->checkState(address) == MODIFIED);
-            else {
+        else {
+          sendMsg = false;
+          req_result = interconnect->checkBusStatus();
+          if (req_result) timer->time++;
+        }
 
+        shared = interconnect->shared;
+
+        if (req_result){
+          bool write = req_result->req == BUSRDX;
+          int cn = req_result->core_num;
+          if (!(sharedCache[cn])->updateCache(write, accessBytes, req_result->addr, p_stats[cn], shared))
+            interconnect->mem->load();
+          if(write){
+            for(int i = 0; i < NUM_PROCESSORS; i++){
+              //assert on write that the current processor is in the MODIFIED state alone
+              if(i == cn) assert(sharedCache[i]->checkState(req_result->addr) == MODIFIED);
+              else {
                 assert(sharedCache[i]->checkState(address) == INVALID);
+              }
+            }
+          }
+          else{
+            //assert on read that no other processor is in the MODIFIED STATE
+            for(int i = 0; i < NUM_PROCESSORS; i ++){
+              if(i == ctid); //assert(sharedCache[i]->checkState(address) == SHARED);
+              else assert(sharedCache[i]->checkState(address) != MODIFIED);
+            }
+            //if a processor moved into EXCLUSIVE, assert others aren't in shared
+            if(sharedCache[ctid]->checkState(address) == EXCLUSIVE){
+              for(int i = 0; i < NUM_PROCESSORS; i ++){
+                if(i == ctid); //assert(sharedCache[i]->checkState(address) == SHARED);
+                else {
+                  assert(sharedCache[i]->checkState(address) != SHARED);
+                }
+              }
             }
           }
         }
-        else{
-          //assert on read that no other processor is in the MODIFIED STATE
-          for(int i = 0; i < NUM_PROCESSORS; i ++){
-            if(i == ctid); //assert(sharedCache[i]->checkState(address) == SHARED);
-            else assert(sharedCache[i]->checkState(address) != MODIFIED);
-          }
-          //if a processor moved into EXCLUSIVE, assert others aren't in shared
-          if(sharedCache[ctid]->checkState(address) == EXCLUSIVE){
+        if (!sendMsg){
+          if (!(sharedCache[ctid])->updateCache(rw, accessBytes, address, p_stats[ctid], shared))
+            interconnect->mem->load();
+          if(rw){
             for(int i = 0; i < NUM_PROCESSORS; i ++){
+              //assert on write that the current processor is in the MODIFIED state alone
+              if(i == ctid) assert(sharedCache[i]->checkState(address) == MODIFIED);
+              else {
+
+                assert(sharedCache[i]->checkState(address) == INVALID);
+              }
+            }
+          }
+          else{
+            //assert on read that no other processor is in the MODIFIED STATE
+            for(int i = 0; i < NUM_PROCESSORS; i ++){
+              if(i == ctid); //assert(sharedCache[i]->checkState(address) == SHARED);
+              else assert(sharedCache[i]->checkState(address) != MODIFIED);
+            }
+            //if a processor moved into EXCLUSIVE, assert others aren't in shared
+            if(sharedCache[ctid]->checkState(address) == EXCLUSIVE){
+              for(int i = 0; i < NUM_PROCESSORS; i ++){
                 if(i == ctid); //assert(sharedCache[i]->checkState(address) == SHARED);
                 else {
-                    assert(sharedCache[i]->checkState(address) != SHARED);
+                  assert(sharedCache[i]->checkState(address) != SHARED);
                 }
+              }
             }
           }
         }

@@ -27,8 +27,8 @@ class SplitBus
     SplitBus(SimpleCache *c[], Memory *, Time *);
 
     // returns success of write to bus
-    uint64_t sendMsgToBus(int core_num, request_t request, uint64_t addr);
-    uint64_t checkBusStatus();
+    struct requestTableElem *sendMsgToBus(int core_num, request_t request, uint64_t addr);
+    struct requestTableElem *checkBusStatus();
 
 };
 
