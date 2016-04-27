@@ -1,7 +1,9 @@
 #include "splitBus.hpp"
 
-SplitBus::SplitBus(SimpleCache *c[], Memory *m, Time *t){
-  for (int i = 0; i < NUM_PROCESSORS; i++){
+SplitBus::SplitBus(SimpleCache **c, Memory *m, Time *t, int np){
+  num_proc = np;
+  caches = (SimpleCache **) malloc(sizeof(SimpleCache *) * num_proc);
+  for (int i = 0; i < num_proc; i++){
     caches[i] = c[i];
   }
   mem = m;
@@ -10,7 +12,6 @@ SplitBus::SplitBus(SimpleCache *c[], Memory *m, Time *t){
   dirty = false;
   snoop_pending = false;
 
-  next = 0;
   num_requests = 0;
   reqs = (struct requestTableElem *) malloc(MAX_OUTSTANDING_REQ * sizeof(struct requestTableElem));
   for (int i = 0; i < MAX_OUTSTANDING_REQ; i++){
@@ -46,7 +47,7 @@ struct requestTableElem *SplitBus::sendMsgToBus(int core_num, request_t request,
 
   for (int i = 0; i < MAX_OUTSTANDING_REQ; i++){
     if (!reqs[i].done){
-      if (reqs[i].time < NUM_PROCESSORS)
+      if (reqs[i].time < DELAY)
         reqs[i].time++;
       else {
         reqs[i].done = true;
@@ -60,7 +61,7 @@ struct requestTableElem *SplitBus::sendMsgToBus(int core_num, request_t request,
   if (ret == NULL)
     return NULL;
 
-  for (int i = 0; i < NUM_PROCESSORS; i++){
+  for (int i = 0; i < num_proc; i++){
     if (i != ret->core_num){
       //update the status of the cache based on the message on the bus
       if(caches[i]->updateStatus(ret->req, ret->addr)){
@@ -83,7 +84,7 @@ struct requestTableElem *SplitBus::checkBusStatus(){
 
   for (int i = 0; i < MAX_OUTSTANDING_REQ; i++){
     if (!reqs[i].done){
-      if (reqs[i].time < NUM_PROCESSORS)
+      if (reqs[i].time < DELAY)
         reqs[i].time++;
       else {
         reqs[i].done = true;
@@ -97,7 +98,7 @@ struct requestTableElem *SplitBus::checkBusStatus(){
   if (ret == NULL)
     return NULL;
 
-  for (int i = 0; i < NUM_PROCESSORS; i++){
+  for (int i = 0; i < num_proc; i++){
     if (i != ret->core_num){
       //update the status of the cache based on the message on the bus
       if(caches[i]->updateStatus(ret->req, ret->addr)){

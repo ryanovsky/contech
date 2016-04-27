@@ -1,8 +1,6 @@
 #include "graphTraverse.hpp"
 #include <stdio.h>
 
-#define NUM_PROCESSORS 4
-
 using namespace contech;
 
 GraphTraverse::GraphTraverse(char* fname)
@@ -91,7 +89,7 @@ int GraphTraverse::populateQueue()
   SeqId sqid;
   TaskId taskId;
   Task* currentTask;
-  for(int i = 0; i < NUM_PROCESSORS; i ++){
+  for(int i = 0; i < tg->getNumberOfContexts(); i ++){
       ctid = (uint32_t)i;
       sqid = (uint32_t)0;
       ctid_current_state* tempState = new ctid_current_state;
@@ -103,7 +101,7 @@ int GraphTraverse::populateQueue()
       tempState->terminated = false;
       contechState[ctid] = tempState;
   }
-  assert(contechState.size() == NUM_PROCESSORS);
+  assert(contechState.size() == tg->getNumberOfContexts());
   ctid_current_state* tempState;
   while(contechState.size() > 0){ //1 while loop
    for (auto begin = contechState.begin(), end = contechState.end(); begin != end; ++begin){ //2 for loop
@@ -185,7 +183,7 @@ int GraphTraverse::populateQueue()
                 tReq.mav.clear();
                 tReq.bbid = tbb.basic_block_id;
                 tReq.ctid = (unsigned int) tempState->currentTask->getContextId();
-                assert(tReq.ctid >= 0 && tReq.ctid < NUM_PROCESSORS);
+                assert(tReq.ctid >= 0 && tReq.ctid < tg->getNumberOfContexts());
                 uint32_t pushedOps = 0;
                 for (auto iReq = memOps.begin(), eReq = memOps.end(); iReq != eReq; ++iReq)
                 {

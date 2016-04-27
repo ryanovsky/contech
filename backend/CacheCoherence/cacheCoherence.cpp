@@ -7,8 +7,10 @@ CacheCoherence::CacheCoherence(char *fname, uint64_t c, uint64_t s){
   timer = new Time();
   gt = new GraphTraverse(fname);
   mem = new Memory(timer);
-  //num_processors = tg->getNumberofContexts();
-  printf("num processors: %d\n", num_processors);
+  num_processors = gt->tg->getNumberOfContexts();
+  p_stats = (cache_stats_t **)malloc(sizeof(cache_stats_t*) * num_processors);
+  sharedCache = (SimpleCache **)malloc(sizeof(SimpleCache*) * num_processors);
+  visited = (bool *)malloc(sizeof(bool)*num_processors);
 
   for(int i = 0; i < num_processors; i ++){
     sharedCache[i] = new SimpleCache(c, s, i);
@@ -17,7 +19,7 @@ CacheCoherence::CacheCoherence(char *fname, uint64_t c, uint64_t s){
     (p_stats[i])->misses = 0;
     visited[i] = false;
   }
-  interconnect = new SplitBus(sharedCache, mem, timer);
+  interconnect = new SplitBus(sharedCache, mem, timer, num_processors);
 }
 
 void CacheCoherence::run()

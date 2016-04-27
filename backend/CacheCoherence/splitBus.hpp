@@ -1,8 +1,8 @@
 #include "simpleCache.hpp"
 #include "memory.hpp"
 
-#define NUM_PROCESSORS 4
 #define MAX_OUTSTANDING_REQ 8
+#define DELAY 4
 
 struct requestTableElem {
   bool done;
@@ -17,14 +17,14 @@ class SplitBus
 {
   public:
     bool shared, dirty, snoop_pending;
-    int next; //for round robin
+    int num_proc;
     int num_requests;
     Time *timer;
     Memory *mem;
     struct requestTableElem *reqs;
-    SimpleCache *caches[NUM_PROCESSORS];
+    SimpleCache **caches;
 
-    SplitBus(SimpleCache *c[], Memory *, Time *);
+    SplitBus(SimpleCache **c, Memory *, Time *, int np);
 
     // returns success of write to bus
     struct requestTableElem *sendMsgToBus(int core_num, request_t request, uint64_t addr);
