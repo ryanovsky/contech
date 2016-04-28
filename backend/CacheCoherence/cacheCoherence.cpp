@@ -8,18 +8,32 @@ CacheCoherence::CacheCoherence(char *fname, uint64_t c, uint64_t s){
   gt = new GraphTraverse(fname);
   mem = new Memory(timer);
   num_processors = gt->tg->getNumberOfContexts();
-  p_stats = (cache_stats_t **)malloc(sizeof(cache_stats_t*) * num_processors);
-  sharedCache = (SimpleCache **)malloc(sizeof(SimpleCache*) * num_processors);
-  visited = (bool *)malloc(sizeof(bool)*num_processors);
+  p_stats = (cache_stats_t **) malloc(sizeof(cache_stats_t*) * num_processors);
+  sharedCache = (SimpleCache **) malloc(sizeof(SimpleCache*) * num_processors);
+  visited = (bool *) malloc(sizeof(bool) * num_processors);
 
-  for(int i = 0; i < num_processors; i ++){
+  for(int i = 0; i < num_processors; i++){
     sharedCache[i] = new SimpleCache(c, s, i);
     p_stats[i] = (cache_stats_t *) malloc(sizeof(struct cache_stats_t));
-    (p_stats[i])->accesses = 0;
-    (p_stats[i])->misses = 0;
+    p_stats[i]->accesses = 0;
+    p_stats[i]->misses = 0;
     visited[i] = false;
   }
   interconnect = new SplitBus(sharedCache, mem, timer, num_processors);
+}
+
+CacheCoherence::~CacheCoherence(){
+  delete timer;
+  delete gt;
+  delete mem;
+  for(int i = 0; i < num_processors; i++){
+     delete sharedCache[i];
+     free(p_stats[i]);
+  }
+  free(p_stats);
+  free(sharedCache);
+  free(visited);
+  delete interconnect;
 }
 
 void CacheCoherence::run()
@@ -107,14 +121,14 @@ void CacheCoherence::run()
                 interconnect->mem->load();
 
               srcAddress += accessSize;
-              (p_stats[cn])->accesses ++;
+              (p_stats[cn])->accesses++;
               assert_correctness(write, cn, req_result->addr);
             }
             if (!sendMsg){
               if (!(sharedCache[ctid])->updateCache(false, accessSize, srcAddress, p_stats[ctid], shared))
                 interconnect->mem->load();
               srcAddress += accessSize;
-              (p_stats[ctid])->accesses ++;
+              (p_stats[ctid])->accesses++;
               assert_correctness(false, ctid, srcAddress);
             }
           }
@@ -138,20 +152,20 @@ void CacheCoherence::run()
             int cn = req_result->core_num;
             if (!(sharedCache[cn])->updateCache(write, accessSize, req_result->addr, p_stats[cn], shared))
               interconnect->mem->load();
-            (p_stats[cn])->accesses ++;
+            (p_stats[cn])->accesses++;
             assert_correctness(write, cn, req_result->addr);
 
           }
           if (!sendMsg){
             if (!(sharedCache[ctid])->updateCache(true, accessSize, dstAddress, p_stats[ctid], shared))
               interconnect->mem->load();
-            (p_stats[ctid])->accesses ++;
+            (p_stats[ctid])->accesses++;
             assert_correctness(true, ctid, dstAddress);
           }
 
 
           dstAddress += accessSize;
-          (p_stats[ctid])->accesses ++;
+          (p_stats[ctid])->accesses++;
         } while (bytesToAccess > 0);
         continue;
       }
@@ -197,13 +211,13 @@ void CacheCoherence::run()
           int cn = req_result->core_num;
           if (!(sharedCache[cn])->updateCache(write, accessBytes, req_result->addr, p_stats[cn], shared))
               interconnect->mem->load();
-          (p_stats[cn])->accesses ++;
+          (p_stats[cn])->accesses++;
           assert_correctness(write, cn, req_result->addr);
         }
         if (!sendMsg){
           if (!(sharedCache[ctid])->updateCache(rw, accessBytes, address, p_stats[ctid], shared))
             interconnect->mem->load();
-          (p_stats[ctid])->accesses ++;
+          (p_stats[ctid])->accesses++;
           assert_correctness(rw, ctid, address);
         }
 
@@ -212,7 +226,7 @@ void CacheCoherence::run()
     }
 
     //assert everything in the cache is valid
-    for(int i = 0; i < num_processors; i ++){
+    for(int i = 0; i < num_processors; i++){
       assert(sharedCache[i]->checkValid());
     }
 
@@ -221,25 +235,17 @@ void CacheCoherence::run()
     //prev_ctid = ctid;
   }
   int accesses = 0;
-  for(int i = 0; i < num_processors; i ++){
+  for(int i = 0; i < num_processors; i++){
     printf("cache %d accesses:%d, misses:%d\n", i, (p_stats[i])->accesses, (p_stats[i])->misses);
     accesses = accesses + (p_stats[i])->accesses;
   }
   printf("total access:%d total time:%d \n", accesses, timer->time);
-
-  //delete gt;
-  //delete mem;
-  //delete interconnect;
-  for(int i = 0; i < num_processors; i ++){
-     delete sharedCache[i];
-     delete p_stats[i];
-   }
 }
 
 
 void CacheCoherence::assert_correctness(bool write, uint64_t ctid, uint64_t address){
     if(write){
-        for(int i = 0; i < num_processors; i ++){
+        for(int i = 0; i < num_processors; i++){
             //assert on write that the current processor is in the MODIFIED state alone
             if(i == ctid) assert(sharedCache[i]->checkState(address) == MODIFIED);
             else {
@@ -249,13 +255,13 @@ void CacheCoherence::assert_correctness(bool write, uint64_t ctid, uint64_t addr
     }
     else{
         //assert on read that no other processor is in the MODIFIED STATE
-        for(int i = 0; i < num_processors; i ++){
+        for(int i = 0; i < num_processors; i++){
             if(i == ctid); //assert(sharedCache[i]->checkState(address) == SHARED);
             else assert(sharedCache[i]->checkState(address) != MODIFIED);
         }
         //if a processor moved into EXCLUSIVE, assert others aren't in shared
         if(sharedCache[ctid]->checkState(address) == EXCLUSIVE){
-            for(int i = 0; i < num_processors; i ++){
+            for(int i = 0; i < num_processors; i++){
                 if(i == ctid); //assert(sharedCache[i]->checkState(address) == SHARED);
                 else {
                     assert(sharedCache[i]->checkState(address) != SHARED);

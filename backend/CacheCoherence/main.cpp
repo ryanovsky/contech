@@ -9,11 +9,11 @@ int main(int argc, char** argv)
     return 1;
   }
 
-    else
-    {
-        CacheCoherence* cc = new CacheCoherence(argv[2], atoi(argv[1]),2);
-        cc->run();
-        delete cc;
-    }
-    return 0;
+  else
+  {
+    CacheCoherence* cc = new CacheCoherence(argv[2], atoi(argv[1]),2);
+    cc->run();
+    delete cc;
+  }
+  return 0;
 }

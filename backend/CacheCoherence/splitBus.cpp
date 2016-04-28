@@ -19,6 +19,11 @@ SplitBus::SplitBus(SimpleCache **c, Memory *m, Time *t, int np){
   }
 }
 
+SplitBus::~SplitBus(){
+  free(caches);
+  free(reqs);
+}
+
 struct requestTableElem *SplitBus::sendMsgToBus(int core_num, request_t request, uint64_t addr){
   timer->time++;
   snoop_pending = true;

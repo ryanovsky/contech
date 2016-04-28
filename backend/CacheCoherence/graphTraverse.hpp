@@ -1,4 +1,3 @@
-
 #include <ct_file.h>
 #include <TaskGraph.hpp>
 
@@ -47,4 +46,3 @@ public:
 
     int getNextMemoryRequest(MemReqContainer&);
 };
-

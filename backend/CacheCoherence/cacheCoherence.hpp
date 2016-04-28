@@ -21,6 +21,7 @@ class CacheCoherence
     cache_stats_t ** p_stats;
 
     CacheCoherence(char*, uint64_t, uint64_t s);
+    ~CacheCoherence();
     void assert_correctness(bool rw, uint64_t ctid, uint64_t addr);
     virtual void run();
 };
