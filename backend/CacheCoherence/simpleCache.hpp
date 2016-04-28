@@ -18,7 +18,7 @@ enum request_t {
   BUSRDX,
   BUSRD,
   FLUSH,
-  NOTHING
+  NOTHING,
 };
 
 struct cache_stats_t {

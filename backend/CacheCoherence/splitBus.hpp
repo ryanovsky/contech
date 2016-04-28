@@ -6,8 +6,8 @@
 
 struct requestTableElem {
   bool done;
+  bool ACK;
   int core_num;
-  int tag;
   int time;
   request_t req;
   uint64_t addr;

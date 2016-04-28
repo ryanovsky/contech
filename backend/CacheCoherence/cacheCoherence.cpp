@@ -91,6 +91,10 @@ void CacheCoherence::run()
               req = BUSRD;
               sendMsg = true;
               req_result = interconnect->sendMsgToBus(ctid, req, srcAddress);
+              if(req_result->ACK == false){
+                  printf("NACK\n");
+                  //push back onto the queue
+              }
             }
             else{
               sendMsg = false;
@@ -100,7 +104,7 @@ void CacheCoherence::run()
 
             shared = interconnect->shared;
 
-            if (req_result){
+            if (req_result->core_num != -1){
               bool write = req_result->req == BUSRDX;
               int cn = req_result->core_num;
               if (!(sharedCache[cn])->updateCache(write, accessSize, req_result->addr, p_stats[cn], shared))
@@ -117,6 +121,7 @@ void CacheCoherence::run()
               (p_stats[ctid])->accesses ++;
               assert_correctness(false, ctid, srcAddress);
             }
+            free(req_result);
           }
           //if in invalid or shared state
           if(sharedCache[ctid]->checkState(dstAddress) == INVALID ||
@@ -124,6 +129,10 @@ void CacheCoherence::run()
             req = BUSRDX;
             sendMsg = true;
             req_result = interconnect->sendMsgToBus(ctid, req, dstAddress);
+              if(req_result->ACK == false){
+                  printf("NACK\n");
+                  //push back onto the queue
+              }
           }
           else {
             sendMsg = false;
@@ -133,7 +142,7 @@ void CacheCoherence::run()
 
           shared = interconnect->shared;
 
-          if (req_result){
+          if (req_result->core_num != -1){
             bool write = req_result->req == BUSRDX;
             int cn = req_result->core_num;
             if (!(sharedCache[cn])->updateCache(write, accessSize, req_result->addr, p_stats[cn], shared))
@@ -149,7 +158,7 @@ void CacheCoherence::run()
             assert_correctness(true, ctid, dstAddress);
           }
 
-
+          free(req_result);
           dstAddress += accessSize;
           (p_stats[ctid])->accesses ++;
         } while (bytesToAccess > 0);
@@ -183,6 +192,10 @@ void CacheCoherence::run()
             (sharedCache[ctid]->checkState(address) == SHARED && rw == true)){
           sendMsg = true;
           req_result = interconnect->sendMsgToBus(ctid, req, address);
+          if(req_result->ACK == false){
+                  printf("NACK\n");
+                  //push back onto the queue
+          }
         }
         else {
           sendMsg = false;
@@ -192,7 +205,7 @@ void CacheCoherence::run()
 
         shared = interconnect->shared;
 
-        if (req_result){
+        if (req_result->core_num != -1){
           bool write = req_result->req == BUSRDX;
           int cn = req_result->core_num;
           if (!(sharedCache[cn])->updateCache(write, accessBytes, req_result->addr, p_stats[cn], shared))
@@ -207,6 +220,7 @@ void CacheCoherence::run()
           assert_correctness(rw, ctid, address);
         }
 
+        free(req_result);
         address += accessBytes;
       } while (numOfBytes > 0);
     }

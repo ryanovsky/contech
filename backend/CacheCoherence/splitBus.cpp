@@ -22,28 +22,31 @@ SplitBus::SplitBus(SimpleCache **c, Memory *m, Time *t, int np){
 struct requestTableElem *SplitBus::sendMsgToBus(int core_num, request_t request, uint64_t addr){
   timer->time++;
   snoop_pending = true;
+  struct requestTableElem *ret = (struct requestTableElem *) malloc(sizeof(struct requestTableElem));
+  ret->core_num = -1;
 
-  if (num_requests == MAX_OUTSTANDING_REQ){
+  bool ack = (num_requests < MAX_OUTSTANDING_REQ) ? true : false;
+  ret->ACK = ack;
+  if (num_requests >= MAX_OUTSTANDING_REQ){
     printf("Too many outstanding requests!\n");
     // NACK to core to retry this request later
-    return NULL;
+    //return NULL;
+  }
+  else {
+    int next_tag = 0;
+    for (int i = 0; i < MAX_OUTSTANDING_REQ; i++){
+      next_tag = i;
+      if (reqs[i].done) break;
+    }
+
+    //add request to request table
+    reqs[next_tag].done = false;
+    reqs[next_tag].core_num = core_num;
+    reqs[next_tag].addr = addr;
+    reqs[next_tag].req = request;
+    num_requests++;
   }
 
-  int next_tag = 0;
-  for (int i = 0; i < MAX_OUTSTANDING_REQ; i++){
-    next_tag = i;
-    if (reqs[i].done) break;
-  }
-
-  //add request to request table
-  reqs[next_tag].done = false;
-  reqs[next_tag].core_num = core_num;
-  reqs[next_tag].addr = addr;
-  reqs[next_tag].req = request;
-  num_requests++;
-
-
-  struct requestTableElem *ret = NULL;
 
   for (int i = 0; i < MAX_OUTSTANDING_REQ; i++){
     if (!reqs[i].done){
@@ -52,15 +55,21 @@ struct requestTableElem *SplitBus::sendMsgToBus(int core_num, request_t request,
       else {
         reqs[i].done = true;
         num_requests--;
-        ret = &reqs[i];
+        //ret = &reqs[i];
+        //memcpy(ret, &reqs[i], sizeof(struct requestTableElem));
+        ret->done = reqs[i].done;
+        ret->core_num = reqs[i].core_num;
+        ret->time = reqs[i].time;
+        ret->req = reqs[i].req;
+        ret->addr = reqs[i].addr;
+        ret->ACK = ack;
         break;
       }
     }
   }
 
-  if (ret == NULL)
-    return NULL;
 
+  if(ret->core_num != -1){
   for (int i = 0; i < num_proc; i++){
     if (i != ret->core_num){
       //update the status of the cache based on the message on the bus
@@ -72,6 +81,7 @@ struct requestTableElem *SplitBus::sendMsgToBus(int core_num, request_t request,
       shared = shared || (caches[i]->checkState(ret->addr) == SHARED);
     }
   }
+  }
 
   snoop_pending = false;
   return ret;
@@ -80,7 +90,8 @@ struct requestTableElem *SplitBus::sendMsgToBus(int core_num, request_t request,
 struct requestTableElem *SplitBus::checkBusStatus(){
   timer->time++;
 
-  struct requestTableElem *ret = NULL;
+  struct requestTableElem *ret = (struct requestTableElem *) malloc(sizeof(struct requestTableElem));
+  ret->core_num = -1;
 
   for (int i = 0; i < MAX_OUTSTANDING_REQ; i++){
     if (!reqs[i].done){
@@ -89,15 +100,19 @@ struct requestTableElem *SplitBus::checkBusStatus(){
       else {
         reqs[i].done = true;
         num_requests--;
-        ret = &reqs[i];
+        //ret = &reqs[i];
+        ret->done = reqs[i].done;
+        ret->core_num = reqs[i].core_num;
+        ret->time = reqs[i].time;
+        ret->req = reqs[i].req;
+        ret->addr = reqs[i].addr;
+
         break;
       }
     }
   }
 
-  if (ret == NULL)
-    return NULL;
-
+  if (ret->core_num != -1){
   for (int i = 0; i < num_proc; i++){
     if (i != ret->core_num){
       //update the status of the cache based on the message on the bus
@@ -108,6 +123,8 @@ struct requestTableElem *SplitBus::checkBusStatus(){
       }
     }
   }
+  }
 
   return ret;
 }
+
