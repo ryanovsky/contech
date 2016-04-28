@@ -107,7 +107,7 @@ void CacheCoherence::run()
             if (req_result->core_num != -1){
               bool write = req_result->req == BUSRDX;
               int cn = req_result->core_num;
-              if (!(sharedCache[cn])->updateCache(write, accessSize, req_result->addr, p_stats[cn], shared))
+              if (!(sharedCache[cn])->updateCache(write, req_result->addr, p_stats[cn], shared))
                 interconnect->mem->load();
 
               srcAddress += accessSize;
@@ -115,7 +115,7 @@ void CacheCoherence::run()
               assert_correctness(write, cn, req_result->addr);
             }
             if (!sendMsg){
-              if (!(sharedCache[ctid])->updateCache(false, accessSize, srcAddress, p_stats[ctid], shared))
+              if (!(sharedCache[ctid])->updateCache(false, srcAddress, p_stats[ctid], shared))
                 interconnect->mem->load();
               srcAddress += accessSize;
               (p_stats[ctid])->accesses ++;
@@ -145,14 +145,14 @@ void CacheCoherence::run()
           if (req_result->core_num != -1){
             bool write = req_result->req == BUSRDX;
             int cn = req_result->core_num;
-            if (!(sharedCache[cn])->updateCache(write, accessSize, req_result->addr, p_stats[cn], shared))
+            if (!(sharedCache[cn])->updateCache(write, req_result->addr, p_stats[cn], shared))
               interconnect->mem->load();
             (p_stats[cn])->accesses ++;
             assert_correctness(write, cn, req_result->addr);
 
           }
           if (!sendMsg){
-            if (!(sharedCache[ctid])->updateCache(true, accessSize, dstAddress, p_stats[ctid], shared))
+            if (!(sharedCache[ctid])->updateCache(true, dstAddress, p_stats[ctid], shared))
               interconnect->mem->load();
             (p_stats[ctid])->accesses ++;
             assert_correctness(true, ctid, dstAddress);
@@ -208,13 +208,13 @@ void CacheCoherence::run()
         if (req_result->core_num != -1){
           bool write = req_result->req == BUSRDX;
           int cn = req_result->core_num;
-          if (!(sharedCache[cn])->updateCache(write, accessBytes, req_result->addr, p_stats[cn], shared))
+          if (!(sharedCache[cn])->updateCache(write, req_result->addr, p_stats[cn], shared))
               interconnect->mem->load();
           (p_stats[cn])->accesses ++;
           assert_correctness(write, cn, req_result->addr);
         }
         if (!sendMsg){
-          if (!(sharedCache[ctid])->updateCache(rw, accessBytes, address, p_stats[ctid], shared))
+          if (!(sharedCache[ctid])->updateCache(rw, address, p_stats[ctid], shared))
             interconnect->mem->load();
           (p_stats[ctid])->accesses ++;
           assert_correctness(rw, ctid, address);

@@ -128,12 +128,12 @@ bool SimpleCache::updateCacheLine(uint64_t idx, uint64_t tag, uint64_t offset, u
   return false;
 }
 
-bool SimpleCache::updateCache(bool write, char numOfBytes, uint64_t address, cache_stats_t* p_stats, bool shared)
+bool SimpleCache::updateCache(bool write, uint64_t address, cache_stats_t* p_stats, bool shared)
 {
   unsigned int bbMissCount = 0;
   uint64_t cacheIdx = address >> global_b;
   uint64_t offset = address & ((0x1<<global_b) - 1);
-  uint64_t size = numOfBytes;
+  uint64_t size = 0;
   uint64_t tag = address >> ((global_c - global_s));
   uint64_t accessCount = p_stats->accesses;
 

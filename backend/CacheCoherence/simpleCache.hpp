@@ -56,7 +56,7 @@ class SimpleCache
     SimpleCache(uint64_t, uint64_t);
     SimpleCache(uint64_t, uint64_t, int);
     double getMissRate();
-    bool updateCache(bool rw, char numOfBytes, uint64_t address, cache_stats_t* p_stats, bool shared);
+    bool updateCache(bool rw, uint64_t address, cache_stats_t* p_stats, bool shared);
 
     cache_line *addressToCacheline(uint64_t address);
     bool updateStatus(request_t request, uint64_t addr);
