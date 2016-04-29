@@ -25,6 +25,7 @@ class SplitBus
     SimpleCache **caches;
 
     SplitBus(SimpleCache **c, Memory *, Time *, int np);
+    ~SplitBus();
 
     // returns success of write to bus
     struct requestTableElem *sendMsgToBus(int core_num, request_t request, uint64_t addr);

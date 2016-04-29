@@ -232,7 +232,7 @@ cache_state SimpleCache::checkState(uint64_t addr){
 
 bool SimpleCache::checkValid(){
 
-  for(int idx = 0; idx < cacheBlocks.size(); idx ++){
+  for(int idx = 0; idx < cacheBlocks.size(); idx++){
     for (auto it = cacheBlocks[idx].begin(), et = cacheBlocks[idx].end(); it != et; ++it)
     {
       if(it->state == INVALID) return false;

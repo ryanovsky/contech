@@ -89,7 +89,7 @@ int GraphTraverse::populateQueue()
   SeqId sqid;
   TaskId taskId;
   Task* currentTask;
-  for(int i = 0; i < tg->getNumberOfContexts(); i ++){
+  for(int i = 0; i < tg->getNumberOfContexts(); i++){
       ctid = (uint32_t)i;
       sqid = (uint32_t)0;
       ctid_current_state* tempState = new ctid_current_state;
