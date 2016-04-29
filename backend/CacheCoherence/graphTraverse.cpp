@@ -114,8 +114,10 @@ int GraphTraverse::populateQueue()
         }
 
         //check if task is not type basic block
-        if(tempState->currentTask->getType()!= task_type_basic_blocks
-            && currentTask->getType() != task_type_barrier){ // 3 if statement
+        if(tempState->currentTask->getType() == task_type_create ||
+           currentTask->getType() == task_type_join ||
+           (currentTask->getType() == task_type_join &&
+            currentTask->getSyncType() != sync_type_lock)){ // 3 if statement
             //skip these tasks
                 taskId = getSequenceTask(
                     tempState->currentTask->getSuccessorTasks(),
@@ -182,6 +184,7 @@ int GraphTraverse::populateQueue()
                 MemReqContainer tReq;
                 tReq.mav.clear();
                 tReq.bbid = tbb.basic_block_id;
+                tReq.locked = false;
                 tReq.ctid = (unsigned int) tempState->currentTask->getContextId();
                 assert(tReq.ctid >= 0 && tReq.ctid < tg->getNumberOfContexts());
                 uint32_t pushedOps = 0;
@@ -212,9 +215,13 @@ int GraphTraverse::populateQueue()
                         pushedOps++;
                         ma = *iReq;
                     }
-
                     pushedOps++;
                     tReq.mav.push_back(ma);
+                    if(tempState->currentTask->getType() == task_type_sync){
+                        tReq.locked = true;
+                        assert(pushedOps == 1);
+                        assert(tempState->currentTask->getSyncType() == sync_type_lock);
+                    }
                 }
                 assert(pushedOps == tReq.mav.size());
 

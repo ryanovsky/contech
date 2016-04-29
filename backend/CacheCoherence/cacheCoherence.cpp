@@ -30,7 +30,7 @@ void CacheCoherence::run()
   request_t req;
   struct requestTableElem *req_result;
   bool sendMsg = false;
-
+  bool next_cycle = false;
   while (gt->getNextMemoryRequest(mrc)) {
     ctid = (uint32_t)(mrc.ctid);
     bool rw = false;
@@ -40,6 +40,7 @@ void CacheCoherence::run()
 
     if (visited[ctid]){
       timer->time++;
+      next_cycle == true;
       for(int i = 0; i < num_processors; i++){
         visited[i] = false;
       }
@@ -47,6 +48,28 @@ void CacheCoherence::run()
     visited[ctid] = true;
 
 
+    if(mrc.locked == true){
+        if(lockedVals.find(mrc.mav.begin()->addr) == lockedVals.end()){
+          //if not in the locked struct put it in there
+          lockedVals[mrc.mav.begin()->addr] = true;
+        }
+        else{
+          //if in the locked struct put it in temp queue and continue
+          tempQ[ctid] = mrc;
+          continue;
+        }
+    }
+    //tempQ gets priority over new mem requests
+    if(!tempQ.empty()){
+        //temp_ctid = (uint32_t)(tempQ.front().ctid)
+        if(tempQ.find(ctid) != tempQ.end()){ //if ctid exists in map
+          MemReqContainer temp_mrc;
+          temp_mrc = tempQ.find(ctid)->second;
+          tempQ.erase(tempQ.find(ctid));
+          tempQ[mrc.ctid] = mrc;
+          mrc = temp_mrc;
+        }
+    }
     for (auto iReq = mrc.mav.begin(), eReq = mrc.mav.end(); iReq != eReq; ++iReq, memOpPos++)
     {
       MemoryAction ma = *iReq;
@@ -233,6 +256,15 @@ void CacheCoherence::run()
     //printf("time:%d, processor:%d, misses=%d, accesses=%d\n"
     //    ,timer->time, ctid, p_stats[ctid]->misses, p_stats[ctid]->accesses);
     //prev_ctid = ctid;
+    if(next_cycle){
+        next_cycle = false;
+        if(mrc.locked = true){
+            //assert it was in the locked table
+            assert(lockedVals.find(mrc.mav.begin()->addr) != lockedVals.end());
+            //remove from the locked table
+            lockedVals.erase(mrc.mav.begin()->addr);
+        }
+    }
   }
   int accesses = 0;
   for(int i = 0; i < num_processors; i ++){

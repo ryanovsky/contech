@@ -29,6 +29,7 @@ public:
     unsigned int bbid;
     unsigned int ctid;
     unsigned int pushedOps;
+    bool locked;
 };
 
 class GraphTraverse

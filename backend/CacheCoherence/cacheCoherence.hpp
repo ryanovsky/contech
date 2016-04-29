@@ -17,6 +17,9 @@ class CacheCoherence
 
     GraphTraverse* gt;
     std::map <contech::ContextId, SimpleCache> contextCacheState;
+    std::map <uint64_t, bool> lockedVals;
+    std::map <contech::ContextId, MemReqContainer> tempQ;
+    //std::queue<MemReqContainer, deque<MemReqContainer>>tempQ;
     SimpleCache ** sharedCache;
     cache_stats_t ** p_stats;
 
