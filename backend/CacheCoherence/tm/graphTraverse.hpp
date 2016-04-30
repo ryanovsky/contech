@@ -1,27 +1,32 @@
+#include <queue>
+#include <deque>
+#include <string>
+#include <fstream>
+#include <stdint.h>
+#include <string.h>
+
 enum instruction_type{
     BEGIN,
     WORK,
-    END
+    COMMIT
 };
-struct instruction {
+
+class Instruction {
+  public:
+    int core_num;
     instruction_type instr;
     bool write;
     uint64_t addr;
-}
+};
 
+class GraphTraverse {
+  public:
+    std::queue <Instruction, std::deque<Instruction>> core1;
+    std::queue <Instruction, std::deque<Instruction>> core2;
+    std::queue <Instruction, std::deque<Instruction>> core3;
 
-struct MemReq{
-  unsigned int ctid;
-  bool isWrite;
-  char numOfBytes;
-  unsigned long int address;
+    std::queue <Instruction, std::deque<Instruction>> memReqQ;
 
-}
-
-class graphTraverse {
-    instruction *core1;
-    instruction *core2;
-    instruction *core3;
-
-    graphTraverse(char *)
-}
+    GraphTraverse(char *);
+    int getNextMemoryRequest(Instruction &nextReq);
+};

@@ -1,48 +1,48 @@
-1: Xbegin
+1: Xbegin 0
 1: load 2
 1: store 2
-1: Xcommit
-1: Xbegin
-2: Xbegin
+1: Xcommit 0
+1: Xbegin 0
+2: Xbegin 0
 2: load 1000
 2: store 1000
 1: load 2
 1: store 2
-1: Xcommit
-1: Xbegin
+1: Xcommit 0
+1: Xbegin 0
 1: load 1000
 1: store 1000
-1: Xcommit
-2: Xcommit
-2: Xbegin
+1: Xcommit 0
+2: Xcommit 0
+2: Xbegin 0
 2: load 2
 2: store 2
-1: Xbegin
+1: Xbegin 0
 1: load 1000
 1: store 1000
-1: Xcommit
-2: Xcommit
-2: Xbegin
+1: Xcommit 0
+2: Xcommit 0
+2: Xbegin 0
 2: load 2
 2: store 2
-2: Xcommit
-2: Xbegin
+2: Xcommit 0
+2: Xbegin 0
 2: load 1000
 2: store 1000
-2: Xcommit
-3: Xbegin
+2: Xcommit 0
+3: Xbegin 0
 3: load 2
 3: store 2
-3: Xcommit
-3: Xbegin
+3: Xcommit 0
+3: Xbegin 0
 3: load 2
 3: store 2
-3: Xcommit
-3: Xbegin
+3: Xcommit 0
+3: Xbegin 0
 3: load 1000
 3: store 1000
-3: Xcommit
-3: Xbegin
+3: Xcommit 0
+3: Xbegin 0
 3: load 1000
 3: store 1000
-3: Xcommit
+3: Xcommit 0
