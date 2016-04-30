@@ -210,7 +210,7 @@ void CacheCoherence::run()
         // Reduce the memory accesses into 8 byte requests
         accessBytes = (numOfBytes > 8)?8:numOfBytes;
         numOfBytes -= accessBytes;
-        (p_stats[ctid])->accesses++;
+        //(p_stats[ctid])->accesses++;
 
         if (ma.type == action_type_mem_write)
         {
