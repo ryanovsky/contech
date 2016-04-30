@@ -5,11 +5,14 @@ GraphTraverse::GraphTraverse(char *str){
   input.open(str, std::fstream::in);
 
   for (std::string line; getline(input, line); ){
-    int threadnum;
-    char tmp[50];
-    uint64_t addr;
-    sscanf(line.c_str(), "%d: %s %ld", threadnum, tmp, addr);
-    std::string instr(tmp);
+    char *threadnumber;
+    char * instr;
+    char *address;
+    threadnumber = strtok((char*)line.c_str(), ":");
+    instr = strtok(NULL, " ");
+    address = strtok(NULL, "\n");
+    int threadnum = atoi(threadnumber);
+    uint64_t addr = atoi(address);
 
     Instruction cur;
     if (instr == "Xbegin"){
@@ -20,12 +23,12 @@ GraphTraverse::GraphTraverse(char *str){
     else if (instr == "load"){
       cur.instr = WORK;
       cur.write = false;
-      cur.addr = 0;
+      cur.addr = addr;
     }
     else if (instr == "store"){
       cur.instr = WORK;
       cur.write = true;
-      cur.addr = 0;
+      cur.addr = addr;
     }
     else if (instr == "Xcommit"){
       cur.instr = COMMIT;
@@ -65,7 +68,10 @@ GraphTraverse::GraphTraverse(char *str){
 
 int GraphTraverse::getNextMemoryRequest(Instruction &nextReq)
 {
-  nextReq = memReqQ.front();
-  memReqQ.pop();
-  return 1;
+  if(!memReqQ.empty()){
+    nextReq = memReqQ.front();
+     memReqQ.pop();
+    return 1;
+  }
+  else return 0;
 }

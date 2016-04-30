@@ -5,7 +5,7 @@ int main(int argc, char** argv)
 {
   if (argc != 3)
   {
-    fprintf(stderr, "%s <size of cache, log2> <taskgraph>\n", argv[0]);
+    fprintf(stderr, "%s <size of cache, log2> <memory trace>\n", argv[0]);
     return 1;
   }
 

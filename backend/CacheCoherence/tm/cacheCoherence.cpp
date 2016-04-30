@@ -47,6 +47,7 @@ void CacheCoherence::run()
   bool next_cycle = false;
 
   while (gt->getNextMemoryRequest(mrc)) {
+    if(mrc.instr == COMMIT || mrc.instr == BEGIN) continue;
     ctid = (uint32_t)(mrc.core_num);
     bool rw = false;
     bool shared = false;
@@ -63,8 +64,7 @@ void CacheCoherence::run()
 
     uint64_t address = mrc.addr;
 
-    // Reduce the memory accesses into 8 byte requests
-    (p_stats[ctid])->accesses++;
+    //(p_stats[ctid])->accesses++;
 
     if (mrc.write)
     {
