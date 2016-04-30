@@ -58,23 +58,23 @@ int withdraw(Acct *account, int amount){
 void *person1_activity(void *param_bank){
     Bank *bank = (Bank *)param_bank;
     deposit(&(bank->array_acct[0]),5);
+    withdraw(&(bank->array_acct[0]),1);
     deposit(&(bank->array_acct[1]), 10);
     withdraw(&(bank->array_acct[1]),3);
-    withdraw(&(bank->array_acct[0]),1);
 }
 void *person2_activity(void *param_bank){
     Bank *bank = (Bank *)param_bank;
-    deposit(&(bank->array_acct[0]),6);
-    deposit(&(bank->array_acct[1]), 15);
     withdraw(&(bank->array_acct[1]),8);
+    deposit(&(bank->array_acct[0]),6);
     withdraw(&(bank->array_acct[0]),4);
+    deposit(&(bank->array_acct[1]), 15);
 }
 void *person3_activity(void *param_bank){
     Bank *bank = (Bank *)param_bank;
+    withdraw(&(bank->array_acct[0]),2);
     deposit(&(bank->array_acct[0]),12);
     deposit(&(bank->array_acct[1]), 13);
     withdraw(&(bank->array_acct[1]),7);
-    withdraw(&(bank->array_acct[0]),2);
 }
 
 int main(){
@@ -101,7 +101,13 @@ int main(){
     if(pthread_join(person1, NULL)){
         printf("Error joining threads\n");
     }
-    printf("acct 1 = %d, acct2 = %d\n", bank->array_acct[0].get(), bank->array_acct[1].get());
+    if(pthread_join(person2, NULL)){
+        printf("Error joining threads\n");
+    }
+    if(pthread_join(person3, NULL)){
+        printf("Error joining threads\n");
+    }
+    //printf("acct 1 = %d, acct2 = %d\n", bank->array_acct[0].get(), bank->array_acct[1].get());
 
     return 1;
 }
