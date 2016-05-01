@@ -45,49 +45,53 @@ void CacheCoherence::run()
   struct requestTableElem *req_result;
   bool sendMsg = false;
   bool next_cycle = false;
+  int g_inprogress = 0;
 
-  while (gt->getNextMemoryRequest(mrc)) {
-    if(mrc.instr == COMMIT || mrc.instr == BEGIN) continue;
-    ctid = (uint32_t)(mrc.core_num);
-    bool rw = false;
-    bool shared = false;
-    unsigned int memOpPos = 0;
-
-    if (visited[ctid]){
-      timer->time++;
-      next_cycle == true;
-      for(int i = 0; i < num_processors; i++){
-        visited[i] = false;
+  while ((g_inprogress = gt->getNextMemoryRequest(mrc)) || interconnect->num_requests > 0) {
+      if(mrc.instr == COMMIT || mrc.instr == BEGIN){
+          continue;
       }
-    }
-    visited[ctid] = true;
+      ctid = (uint32_t)(mrc.core_num);
+      bool rw = false;
+      bool shared = false;
+      unsigned int memOpPos = 0;
 
-    uint64_t address = mrc.addr;
-
-    //(p_stats[ctid])->accesses++;
-
-    if (mrc.write)
-    {
-      rw = true;
-      req = BUSRDX;
-    }
-    else
-    {
-      rw = false;
-      req = BUSRD;
-    }
-
-    // only send message too bus if (shared and write) or invalid
-    cache_state came_from = sharedCache[ctid]->checkState(address);
-    if(sharedCache[ctid]->checkState(address) == INVALID ||
-        (sharedCache[ctid]->checkState(address) == SHARED && rw == true)){
-      sendMsg = true;
-      req_result = interconnect->sendMsgToBus(ctid, req, address);
-      if(req_result->ACK == false){
-        printf("NACK\n");
-        //push back onto the queue
+      if (visited[ctid] && g_inprogress){
+          timer->time++;
+          next_cycle == true;
+          for(int i = 0; i < num_processors; i++){
+              visited[i] = false;
+          }
       }
-    }
+      visited[ctid] = true;
+
+      uint64_t address = mrc.addr;
+
+      //(p_stats[ctid])->accesses++;
+
+      if (mrc.write)
+      {
+          rw = true;
+          req = BUSRDX;
+      }
+      else
+      {
+          rw = false;
+          req = BUSRD;
+      }
+
+      // only send message too bus if (shared and write) or invalid
+      cache_state came_from = sharedCache[ctid]->checkState(address);
+      if(g_inprogress &&
+              (sharedCache[ctid]->checkState(address) == INVALID ||
+               (sharedCache[ctid]->checkState(address) == SHARED && rw == true))){
+          sendMsg = true;
+          req_result = interconnect->sendMsgToBus(ctid, req, address);
+          if(req_result->ACK == false){
+              printf("NACK\n");
+              //push back onto the queue
+          }
+      }
     else {
       sendMsg = false;
       req_result = interconnect->checkBusStatus();
@@ -97,14 +101,15 @@ void CacheCoherence::run()
     shared = interconnect->shared;
 
     if (req_result->core_num != -1){
-      bool write = req_result->req == BUSRDX;
-      int cn = req_result->core_num;
-      if (!(sharedCache[cn])->updateCache(write, req_result->addr, p_stats[cn], shared))
-        interconnect->mem->load();
-      (p_stats[cn])->accesses++;
-      assert_correctness(write, cn, req_result->addr);
+        bool write = req_result->req == BUSRDX;
+        int cn = req_result->core_num;
+        if (!(sharedCache[cn])->
+                updateCache(write, req_result->addr, p_stats[cn], shared))
+            interconnect->mem->load();
+        (p_stats[cn])->accesses++;
+        assert_correctness(write, cn, req_result->addr);
     }
-    if (!sendMsg){
+    if (!sendMsg && g_inprogress){
       if (!(sharedCache[ctid])->updateCache(rw, address, p_stats[ctid], shared))
         interconnect->mem->load();
       (p_stats[ctid])->accesses++;
@@ -127,7 +132,7 @@ void CacheCoherence::run()
     printf("cache %d accesses:%d, misses:%d\n", i, (p_stats[i])->accesses, (p_stats[i])->misses);
     accesses = accesses + (p_stats[i])->accesses;
   }
-  printf("total access:%d total time:%d \n", accesses, timer->time);
+  printf("total access:%d total time:%d\n", accesses, timer->time);
 }
 
 

@@ -14,23 +14,25 @@ GraphTraverse::GraphTraverse(char *str){
     int threadnum = atoi(threadnumber);
     uint64_t addr = atoi(address);
 
+    //printf("%d %d %s\n", threadnum, addr, instr);
+
     Instruction cur;
-    if (instr == "Xbegin"){
+    if (!strcmp(instr, "Xbegin")){
       cur.instr = BEGIN;
       cur.write = false;
       cur.addr = 0;
     }
-    else if (instr == "load"){
+    else if (!strcmp(instr,"load")){
       cur.instr = WORK;
       cur.write = false;
       cur.addr = addr;
     }
-    else if (instr == "store"){
+    else if (!strcmp(instr,"store")){
       cur.instr = WORK;
       cur.write = true;
       cur.addr = addr;
     }
-    else if (instr == "Xcommit"){
+    else if (!strcmp(instr,"Xcommit")){
       cur.instr = COMMIT;
       cur.write = false;
       cur.addr = 0;
@@ -73,5 +75,8 @@ int GraphTraverse::getNextMemoryRequest(Instruction &nextReq)
      memReqQ.pop();
     return 1;
   }
-  else return 0;
+  else {
+      nextReq.instr = WORK;
+      return 0;
+  }
 }
