@@ -30,12 +30,18 @@ struct requestTableElem *SplitBus::sendMsgToBus(int core_num, request_t request,
   struct requestTableElem *ret = (struct requestTableElem *) malloc(sizeof(struct requestTableElem));
   ret->core_num = -1;
 
+  //which transactions need to restart
+  for (int i = 0; i < num_proc; i++){
+    if (caches[i]->rwset.find(addr) != caches[i]->rwset.end()){
+      ret->restart_cores |= (1<<i);
+    }
+  }
+
   bool ack = (num_requests < MAX_OUTSTANDING_REQ) ? true : false;
   ret->ACK = ack;
   if (num_requests >= MAX_OUTSTANDING_REQ){
     printf("Too many outstanding requests!\n");
     // NACK to core to retry this request later
-    //return NULL;
   }
   else {
     int next_tag = 0;
@@ -60,8 +66,6 @@ struct requestTableElem *SplitBus::sendMsgToBus(int core_num, request_t request,
       else {
         reqs[i].done = true;
         num_requests--;
-        //ret = &reqs[i];
-        //memcpy(ret, &reqs[i], sizeof(struct requestTableElem));
         ret->done = reqs[i].done;
         ret->core_num = reqs[i].core_num;
         ret->time = reqs[i].time;
@@ -105,7 +109,6 @@ struct requestTableElem *SplitBus::checkBusStatus(){
       else {
         reqs[i].done = true;
         num_requests--;
-        //ret = &reqs[i];
         ret->done = reqs[i].done;
         ret->core_num = reqs[i].core_num;
         ret->time = reqs[i].time;

@@ -48,85 +48,136 @@ void CacheCoherence::run()
   int g_inprogress = 0;
 
   while ((g_inprogress = gt->getNextMemoryRequest(mrc)) || interconnect->num_requests > 0) {
-      if(mrc.instr == COMMIT || mrc.instr == BEGIN){
-          continue;
+
+    printf("g_inprogress:%d, num_requests:%d\n", g_inprogress, interconnect->num_requests);
+    ctid = (uint32_t)(mrc.core_num);
+    bool rw = false;
+    bool shared = false;
+
+    tempQ[ctid].push(mrc);
+    mrc = tempQ[ctid].front();
+    tempQ[ctid].pop();
+
+    //update time
+    if (visited[ctid] && g_inprogress){
+      timer->time++;
+      next_cycle == true;
+      for(int i = 0; i < num_processors; i++){
+        visited[i] = false;
       }
-      ctid = (uint32_t)(mrc.core_num);
-      bool rw = false;
-      bool shared = false;
-      unsigned int memOpPos = 0;
+    }
+    visited[ctid] = true;
 
-      if (visited[ctid] && g_inprogress){
-          timer->time++;
-          next_cycle == true;
-          for(int i = 0; i < num_processors; i++){
-              visited[i] = false;
-          }
+    SimpleCache *curCache = sharedCache[ctid];
+
+    if (mrc.instr == BEGIN){
+      curCache->rwset.clear();
+
+      req_result = interconnect->checkBusStatus();
+      if (req_result) timer->time++;
+      if (req_result->core_num != -1){
+        bool write = req_result->req == BUSRDX;
+        int cn = req_result->core_num;
+        if (!sharedCache[cn]->updateCache(write, req_result->addr, p_stats[cn], shared))
+          interconnect->mem->load();
+        p_stats[cn]->accesses++;
+        assert_correctness(write, cn, req_result->addr);
       }
-      visited[ctid] = true;
+    }
+    else if (mrc.instr == WORK){
+      curCache->rwset[mrc.addr] = mrc;
 
-      uint64_t address = mrc.addr;
+      req_result = interconnect->checkBusStatus();
+      if (req_result) timer->time++;
+      if (req_result->core_num != -1){
+        bool write = req_result->req == BUSRDX;
+        int cn = req_result->core_num;
+        if (!sharedCache[cn]->updateCache(write, req_result->addr, p_stats[cn], shared))
+          interconnect->mem->load();
+        p_stats[cn]->accesses++;
+        assert_correctness(write, cn, req_result->addr);
+      }
+    }
+    else if (mrc.instr == COMMIT){
+      // update cache for everything in rwset
+      for (auto it = curCache->rwset.begin(); it != curCache->rwset.end(); ++it){
+        uint64_t address = it->first;
+        Instruction curmrc = it->second;
 
-      //(p_stats[ctid])->accesses++;
-
-      if (mrc.write)
-      {
+        if (curmrc.write)
+        {
           rw = true;
           req = BUSRDX;
-      }
-      else
-      {
+        }
+        else
+        {
           rw = false;
           req = BUSRD;
-      }
+        }
 
-      // only send message too bus if (shared and write) or invalid
-      cache_state came_from = sharedCache[ctid]->checkState(address);
-      if(g_inprogress &&
-              (sharedCache[ctid]->checkState(address) == INVALID ||
-               (sharedCache[ctid]->checkState(address) == SHARED && rw == true))){
+        // only send message too bus if (shared and write) or invalid
+        cache_state came_from = sharedCache[ctid]->checkState(address);
+
+        if(g_inprogress &&
+            (sharedCache[ctid]->checkState(address) == INVALID ||
+             (sharedCache[ctid]->checkState(address) == SHARED && rw == true))){
           sendMsg = true;
           req_result = interconnect->sendMsgToBus(ctid, req, address);
           if(req_result->ACK == false){
-              printf("NACK\n");
-              //push back onto the queue
+            printf("NACK\n");
+            //push back onto the queue
           }
-      }
-    else {
-      sendMsg = false;
-      req_result = interconnect->checkBusStatus();
-      if (req_result) timer->time++;
-    }
+          if(req_result->restart_cores != 0){
+            //need to go through and restart transactions
+            for(int i = 0; i < num_processors; i ++){
+              if((req_result->restart_cores >> i) & 1){
+                //put everything in the rwset into tempQ
+                for(int iterate = 0; iterate < sharedCache[i]->rwset.size(); iterate ++){
+                  tempQ[ctid].push(sharedCache[i]->rwset[iterate]);
+                }
+                sharedCache[i]->rwset.clear();
+                //printf("restart!\n");
+              }
+            }
+          }
+        }
+        else {
+          sendMsg = false;
+          req_result = interconnect->checkBusStatus();
+          if (req_result) timer->time++;
+        }
 
-    shared = interconnect->shared;
+        shared = interconnect->shared;
 
-    if (req_result->core_num != -1){
-        bool write = req_result->req == BUSRDX;
-        int cn = req_result->core_num;
-        if (!(sharedCache[cn])->
-                updateCache(write, req_result->addr, p_stats[cn], shared))
+        if (req_result->core_num != -1){
+          bool write = req_result->req == BUSRDX;
+          int cn = req_result->core_num;
+          if (!sharedCache[cn]->updateCache(write, req_result->addr, p_stats[cn], shared))
             interconnect->mem->load();
-        (p_stats[cn])->accesses++;
-        assert_correctness(write, cn, req_result->addr);
-    }
-    if (!sendMsg && g_inprogress){
-      if (!(sharedCache[ctid])->updateCache(rw, address, p_stats[ctid], shared))
-        interconnect->mem->load();
-      (p_stats[ctid])->accesses++;
-      assert_correctness(rw, ctid, address);
-    }
+          p_stats[cn]->accesses++;
+          assert_correctness(write, cn, req_result->addr);
+        }
+        if (!sendMsg && g_inprogress){
+          if (!sharedCache[ctid]->updateCache(rw, address, p_stats[ctid], shared))
+            interconnect->mem->load();
+          p_stats[ctid]->accesses++;
+          assert_correctness(rw, ctid, address);
+        }
 
-    free(req_result);
+        free(req_result);
 
-    //assert everything in the cache is valid
-    for(int i = 0; i < num_processors; i++){
-      assert(sharedCache[i]->checkValid());
+        //assert everything in the cache is valid
+        for(int i = 0; i < num_processors; i++){
+          assert(sharedCache[i]->checkValid());
+        }
+      }
     }
 
     //printf("time:%d, processor:%d, misses=%d, accesses=%d\n"
     //    ,timer->time, ctid, p_stats[ctid]->misses, p_stats[ctid]->accesses);
     //prev_ctid = ctid;
   }
+
   int accesses = 0;
   for(int i = 0; i < num_processors; i++){
     printf("cache %d accesses:%d, misses:%d\n", i, (p_stats[i])->accesses, (p_stats[i])->misses);

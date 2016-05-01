@@ -5,6 +5,7 @@
 #include <vector>
 #include <deque>
 #include <map>
+#include <unordered_map>
 #include "graphTraverse.hpp"
 
 enum cache_state {
@@ -19,6 +20,12 @@ enum request_t {
   BUSRD,
   FLUSH,
   NOTHING,
+};
+
+enum rw_t {
+  READ,
+  WRITE,
+  NONE
 };
 
 struct cache_stats_t {
@@ -51,6 +58,7 @@ class SimpleCache
     static const uint64_t global_b = 6;
     uint64_t global_s;
     int core_num;
+    std::unordered_map<uint64_t, Instruction> rwset;
 
     SimpleCache();
     SimpleCache(uint64_t, uint64_t);
