@@ -39,7 +39,7 @@ public:
 
     bool done;
     contech::TaskGraph* tg;
-    std::queue <MemReqContainer, deque<MemReqContainer>> memReqQ;
+    std::deque <MemReqContainer, std::allocator<MemReqContainer>> memReqQ;
     map<contech::ContextId, ctid_current_state*> contechState;
 
     int populateQueue();

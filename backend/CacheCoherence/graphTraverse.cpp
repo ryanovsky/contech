@@ -37,7 +37,7 @@ int GraphTraverse::getNextMemoryRequest(MemReqContainer &nextReq)
     }
   }
   nextReq = memReqQ.front();
-  memReqQ.pop();
+  memReqQ.pop_front();
 
   return 1;
 }
@@ -227,7 +227,7 @@ int GraphTraverse::populateQueue()
 
         if (pushedOps != 0)
         {
-          memReqQ.push(tReq);
+          memReqQ.push_back(tReq);
           addedMemOps += pushedOps;
         }
         ++(tempState->currentBB);
