@@ -6,6 +6,7 @@ SplitBus::SplitBus(SimpleCache **c, Memory *m, Time *t, int np){
   for (int i = 0; i < num_proc; i++){
     caches[i] = c[i];
   }
+
   mem = m;
   timer = t;
   shared = false;
@@ -16,6 +17,11 @@ SplitBus::SplitBus(SimpleCache **c, Memory *m, Time *t, int np){
   reqs = (struct requestTableElem *) malloc(MAX_OUTSTANDING_REQ * sizeof(struct requestTableElem));
   for (int i = 0; i < MAX_OUTSTANDING_REQ; i++){
     reqs[i].done = true;
+    reqs[i].ACK = false;
+    reqs[i].core_num = -1;
+    reqs[i].time = 0;
+    reqs[i].restart_cores = 0;
+    reqs[i].addr = 0;
   }
 }
 
@@ -29,6 +35,7 @@ struct requestTableElem *SplitBus::sendMsgToBus(int core_num, request_t request,
   snoop_pending = true;
   struct requestTableElem *ret = (struct requestTableElem *) malloc(sizeof(struct requestTableElem));
   ret->core_num = -1;
+  ret->restart_cores = 0;
 
   //which transactions need to restart
   for (int i = 0; i < num_proc; i++){
@@ -101,6 +108,7 @@ struct requestTableElem *SplitBus::checkBusStatus(){
 
   struct requestTableElem *ret = (struct requestTableElem *) malloc(sizeof(struct requestTableElem));
   ret->core_num = -1;
+  ret->restart_cores = 0;
 
   for (int i = 0; i < MAX_OUTSTANDING_REQ; i++){
     if (!reqs[i].done){

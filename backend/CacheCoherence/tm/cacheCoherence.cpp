@@ -42,13 +42,11 @@ void CacheCoherence::run()
   uint32_t ctid = 0;
   uint32_t prev_ctid = ctid;
   request_t req;
-  struct requestTableElem *req_result;
   bool sendMsg = false;
   bool next_cycle = false;
   int g_inprogress = 0;
 
-  while ((g_inprogress = gt->getNextMemoryRequest(mrc)) || interconnect->num_requests > 0) {
-
+  while ((g_inprogress = gt->getNextMemoryRequest(mrc)) || interconnect->num_requests){
     printf("g_inprogress:%d, num_requests:%d\n", g_inprogress, interconnect->num_requests);
     ctid = (uint32_t)(mrc.core_num);
     bool rw = false;
@@ -73,7 +71,7 @@ void CacheCoherence::run()
     if (mrc.instr == BEGIN){
       curCache->rwset.clear();
 
-      req_result = interconnect->checkBusStatus();
+      struct requestTableElem *req_result = interconnect->checkBusStatus();
       if (req_result) timer->time++;
       if (req_result->core_num != -1){
         bool write = req_result->req == BUSRDX;
@@ -83,20 +81,22 @@ void CacheCoherence::run()
         p_stats[cn]->accesses++;
         assert_correctness(write, cn, req_result->addr);
       }
+      free(req_result);
     }
     else if (mrc.instr == WORK){
       curCache->rwset[mrc.addr] = mrc;
 
-      req_result = interconnect->checkBusStatus();
+      struct requestTableElem *req_result = interconnect->checkBusStatus();
       if (req_result) timer->time++;
       if (req_result->core_num != -1){
-        bool write = req_result->req == BUSRDX;
+        bool write = (req_result->req == BUSRDX);
         int cn = req_result->core_num;
         if (!sharedCache[cn]->updateCache(write, req_result->addr, p_stats[cn], shared))
           interconnect->mem->load();
         p_stats[cn]->accesses++;
         assert_correctness(write, cn, req_result->addr);
       }
+      free(req_result);
     }
     else if (mrc.instr == COMMIT){
       // update cache for everything in rwset
@@ -116,18 +116,17 @@ void CacheCoherence::run()
         }
 
         // only send message too bus if (shared and write) or invalid
-        cache_state came_from = sharedCache[ctid]->checkState(address);
+        cache_state came_from = curCache->checkState(address);
+        struct requestTableElem *req_result;
 
-        if(g_inprogress &&
-            (sharedCache[ctid]->checkState(address) == INVALID ||
-             (sharedCache[ctid]->checkState(address) == SHARED && rw == true))){
+        if (g_inprogress && (came_from == INVALID || (came_from == SHARED && rw))){
           sendMsg = true;
           req_result = interconnect->sendMsgToBus(ctid, req, address);
-          if(req_result->ACK == false){
+          if(!req_result->ACK){
             printf("NACK\n");
             //push back onto the queue
           }
-          if(req_result->restart_cores != 0){
+          if (req_result->restart_cores){
             //need to go through and restart transactions
             for(int i = 0; i < num_processors; i ++){
               if((req_result->restart_cores >> i) & 1){
@@ -136,7 +135,6 @@ void CacheCoherence::run()
                   tempQ[ctid].push(sharedCache[i]->rwset[iterate]);
                 }
                 sharedCache[i]->rwset.clear();
-                //printf("restart!\n");
               }
             }
           }
@@ -150,7 +148,7 @@ void CacheCoherence::run()
         shared = interconnect->shared;
 
         if (req_result->core_num != -1){
-          bool write = req_result->req == BUSRDX;
+          bool write = (req_result->req == BUSRDX);
           int cn = req_result->core_num;
           if (!sharedCache[cn]->updateCache(write, req_result->addr, p_stats[cn], shared))
             interconnect->mem->load();
