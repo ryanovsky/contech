@@ -42,9 +42,10 @@ void CacheCoherence::run()
   uint32_t ctid = 0;
   uint32_t prev_ctid = ctid;
   request_t req;
-  struct requestTableElem *req_result;
+  //struct requestTableElem *req_result;
   bool sendMsg = false;
   bool next_cycle = false;
+
   while (gt->getNextMemoryRequest(mrc)) {
     ctid = (uint32_t)(mrc.ctid);
     bool rw = false;
@@ -54,7 +55,7 @@ void CacheCoherence::run()
 
     if (visited[ctid]){
       timer->time++;
-      next_cycle == true;
+      next_cycle = true;
       for(int i = 0; i < num_processors; i++){
         visited[i] = false;
       }
@@ -62,7 +63,7 @@ void CacheCoherence::run()
     visited[ctid] = true;
 
 
-    if(mrc.locked == true){
+    if(mrc.locked){
       if(lockedVals.find(mrc.mav.begin()->addr) == lockedVals.end()){
         //if not in the locked struct put it in there
         lockedVals[mrc.mav.begin()->addr] = true;
@@ -73,17 +74,16 @@ void CacheCoherence::run()
         continue;
       }
     }
+
     //tempQ gets priority over new mem requests
-    if(!tempQ.empty()){
-      //temp_ctid = (uint32_t)(tempQ.front().ctid)
-      if(tempQ.find(ctid) != tempQ.end()){ //if ctid exists in map
-        MemReqContainer temp_mrc;
-        temp_mrc = tempQ.find(ctid)->second;
-        tempQ.erase(tempQ.find(ctid));
-        tempQ[mrc.ctid] = mrc;
-        mrc = temp_mrc;
-      }
+    if(tempQ.find(ctid) != tempQ.end()){ //if ctid exists in map
+      MemReqContainer temp_mrc;
+      temp_mrc = tempQ.find(ctid)->second;
+      tempQ.erase(tempQ.find(ctid));
+      tempQ[mrc.ctid] = mrc;
+      mrc = temp_mrc;
     }
+
     for (auto iReq = mrc.mav.begin(), eReq = mrc.mav.end(); iReq != eReq; ++iReq, memOpPos++)
     {
       MemoryAction ma = *iReq;
@@ -96,7 +96,7 @@ void CacheCoherence::run()
 
         continue;
       }
-      if (ma.type == action_type_free) {continue;}
+      if (ma.type == action_type_free) continue;
       if (ma.type == action_type_memcpy)
       {
         uint64_t dstAddress = ma.addr;
@@ -119,12 +119,12 @@ void CacheCoherence::run()
         char accessSize = 0;
 
         do {
-          accessSize = (bytesToAccess > 8)?8:bytesToAccess;
+          accessSize = (bytesToAccess > 8) ? 8 : bytesToAccess;
           bytesToAccess -= accessSize;
-          if (srcAddress != 0)
-          {
+          if (srcAddress != 0){
+            struct requestTableElem *req_result;
             // broadcast to bus if invalid state
-            if(sharedCache[ctid]->checkState(srcAddress) == INVALID){
+            if (sharedCache[ctid]->checkState(srcAddress) == INVALID){
               req = BUSRD;
               sendMsg = true;
               req_result = interconnect->sendMsgToBus(ctid, req, srcAddress);
@@ -134,7 +134,7 @@ void CacheCoherence::run()
                 gt->memReqQ.push_front(mrc);
               }
             }
-            else{
+            else {
               sendMsg = false;
               req_result = interconnect->checkBusStatus();
               if (req_result) timer->time++;
@@ -161,6 +161,9 @@ void CacheCoherence::run()
             }
             free(req_result);
           }
+
+          struct requestTableElem *req_result;
+
           //if in invalid or shared state
           if(sharedCache[ctid]->checkState(dstAddress) == INVALID ||
               sharedCache[ctid]->checkState(dstAddress) == SHARED){
@@ -188,8 +191,10 @@ void CacheCoherence::run()
               interconnect->mem->load();
             (p_stats[cn])->accesses++;
             assert_correctness(write, cn, req_result->addr);
-
           }
+
+          free(req_result);
+
           if (!sendMsg){
             if (!(sharedCache[ctid])->updateCache(true, dstAddress, p_stats[ctid], shared))
               interconnect->mem->load();
@@ -197,7 +202,6 @@ void CacheCoherence::run()
             assert_correctness(true, ctid, dstAddress);
           }
 
-          free(req_result);
           dstAddress += accessSize;
           (p_stats[ctid])->accesses++;
         } while (bytesToAccess > 0);
@@ -210,7 +214,7 @@ void CacheCoherence::run()
 
       do {
         // Reduce the memory accesses into 8 byte requests
-        accessBytes = (numOfBytes > 8)?8:numOfBytes;
+        accessBytes = (numOfBytes > 8) ? 8 : numOfBytes;
         numOfBytes -= accessBytes;
         //(p_stats[ctid])->accesses++;
 
@@ -225,13 +229,14 @@ void CacheCoherence::run()
           req = BUSRD;
         }
 
+        struct requestTableElem *req_result;
+
         // only send message too bus if (shared and write) or invalid
         cache_state came_from = sharedCache[ctid]->checkState(address);
-        if(sharedCache[ctid]->checkState(address) == INVALID ||
-            (sharedCache[ctid]->checkState(address) == SHARED && rw == true)){
+        if(came_from == INVALID || (came_from == SHARED && rw)){
           sendMsg = true;
           req_result = interconnect->sendMsgToBus(ctid, req, address);
-          if(req_result->ACK == false){
+          if(!req_result->ACK){
             printf("NACK\n");
             //push back onto the queue
             gt->memReqQ.push_front(mrc);
@@ -259,8 +264,8 @@ void CacheCoherence::run()
           (p_stats[ctid])->accesses++;
           assert_correctness(rw, ctid, address);
         }
-
         free(req_result);
+
         address += accessBytes;
       } while (numOfBytes > 0);
     }
@@ -273,9 +278,10 @@ void CacheCoherence::run()
     //printf("time:%d, processor:%d, misses=%d, accesses=%d\n"
     //    ,timer->time, ctid, p_stats[ctid]->misses, p_stats[ctid]->accesses);
     //prev_ctid = ctid;
+
     if(next_cycle){
       next_cycle = false;
-      if(mrc.locked = true){
+      if(mrc.locked){
         //assert it was in the locked table
         assert(lockedVals.find(mrc.mav.begin()->addr) != lockedVals.end());
         //remove from the locked table
