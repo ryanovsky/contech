@@ -276,6 +276,7 @@ void CacheCoherence::run()
     if(next_cycle){
       next_cycle = false;
       if(mrc.locked = true){
+          printf("has locks?\n");
         //assert it was in the locked table
         assert(lockedVals.find(mrc.mav.begin()->addr) != lockedVals.end());
         //remove from the locked table

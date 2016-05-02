@@ -113,11 +113,12 @@ int GraphTraverse::populateQueue()
         continue;
       }
 
+    //if(tempState->currentTask->getType() == task_type_sync) printf("synctype:%d\n", tempState->currentTask->getSyncType());
       //check if task is not type basic block
       if(tempState->currentTask->getType() == task_type_create ||
-          currentTask->getType() == task_type_join ||
-          (currentTask->getType() == task_type_join &&
-           currentTask->getSyncType() != sync_type_lock)){ // 3 if statement
+          tempState->currentTask->getType() == task_type_join ||
+          (tempState->currentTask->getType() == task_type_sync &&
+           tempState->currentTask->getSyncType() != sync_type_lock)){ // 3 if statement
         //skip these tasks
         taskId = getSequenceTask(
             tempState->currentTask->getSuccessorTasks(),
@@ -161,6 +162,23 @@ int GraphTraverse::populateQueue()
       }
       auto f = tempState->currentBB;
       if (tempState->currentBB == tempState->currentBBCol.end()) {//at the end of the basic block collection. Need a new task
+        //if type sync need to save this address
+        if(tempState->currentTask->getType() == task_type_sync){
+            MemReqContainer tReq;
+            tReq.mav.clear();
+            BasicBlockAction tbb = *f;
+            tReq.bbid = tbb.basic_block_id;
+            tReq.ctid = (unsigned int) tempState->currentTask->getContextId();
+            assert(tReq.ctid >= 0 && tReq.ctid < tg->getNumberOfContexts());
+            auto memOps = f.getMemoryActions();
+            MemoryAction ma = *(memOps.begin());
+            tReq.mav.push_back(ma);
+            tReq.locked = true;
+            memReqQ.push_back(tReq);
+            assert(tempState->currentTask->getSyncType() == sync_type_lock);
+          }
+
+
         taskId = getSequenceTask(
             tempState->currentTask->getSuccessorTasks(),
             tempState->currentTask->getContextId());
@@ -217,11 +235,7 @@ int GraphTraverse::populateQueue()
           }
           pushedOps++;
           tReq.mav.push_back(ma);
-          if(tempState->currentTask->getType() == task_type_sync){
-            tReq.locked = true;
-            assert(pushedOps == 1);
-            assert(tempState->currentTask->getSyncType() == sync_type_lock);
-          }
+
         }
         assert(pushedOps == tReq.mav.size());
 
