@@ -2,9 +2,7 @@
 #include <map>
 #include <deque>
 #include "simpleCache.hpp"
-//#include "bus.hpp"
 #include "splitBus.hpp"
-
 
 class CacheCoherence
 {
@@ -16,12 +14,10 @@ class CacheCoherence
     Memory *mem;
 
     GraphTraverse* gt;
-    std::map <contech::ContextId, SimpleCache> contextCacheState;
     std::map <uint64_t, bool> lockedVals;
-    //std::map <contech::ContextId, MemReqContainer> tempQ;
-    //std::queue<MemReqContainer, deque<MemReqContainer>>tempQ;
-    SimpleCache ** sharedCache;
-    cache_stats_t ** p_stats;
+    SimpleCache **sharedCache;
+    cache_stats_t **p_stats;
+    std::map <int, std::queue<Instruction, deque<Instruction>>> tempQ;
 
     CacheCoherence(char*, uint64_t, uint64_t s);
     ~CacheCoherence();

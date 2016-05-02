@@ -6,6 +6,7 @@ SplitBus::SplitBus(SimpleCache **c, Memory *m, Time *t, int np){
   for (int i = 0; i < num_proc; i++){
     caches[i] = c[i];
   }
+
   mem = m;
   timer = t;
   shared = false;
@@ -16,6 +17,11 @@ SplitBus::SplitBus(SimpleCache **c, Memory *m, Time *t, int np){
   reqs = (struct requestTableElem *) malloc(MAX_OUTSTANDING_REQ * sizeof(struct requestTableElem));
   for (int i = 0; i < MAX_OUTSTANDING_REQ; i++){
     reqs[i].done = true;
+    reqs[i].ACK = false;
+    reqs[i].core_num = -1;
+    reqs[i].time = 0;
+    reqs[i].restart_cores = 0;
+    reqs[i].addr = 0;
   }
 }
 
@@ -29,13 +35,20 @@ struct requestTableElem *SplitBus::sendMsgToBus(int core_num, request_t request,
   snoop_pending = true;
   struct requestTableElem *ret = (struct requestTableElem *) malloc(sizeof(struct requestTableElem));
   ret->core_num = -1;
+  ret->restart_cores = 0;
+
+  //which transactions need to restart
+  for (int i = 0; i < num_proc; i++){
+    if (caches[i]->rwset.find(addr) != caches[i]->rwset.end()){
+      ret->restart_cores |= (1<<i);
+    }
+  }
 
   bool ack = (num_requests < MAX_OUTSTANDING_REQ) ? true : false;
   ret->ACK = ack;
   if (num_requests >= MAX_OUTSTANDING_REQ){
     printf("Too many outstanding requests!\n");
     // NACK to core to retry this request later
-    //return NULL;
   }
   else {
     int next_tag = 0;
@@ -60,8 +73,6 @@ struct requestTableElem *SplitBus::sendMsgToBus(int core_num, request_t request,
       else {
         reqs[i].done = true;
         num_requests--;
-        //ret = &reqs[i];
-        //memcpy(ret, &reqs[i], sizeof(struct requestTableElem));
         ret->done = reqs[i].done;
         ret->core_num = reqs[i].core_num;
         ret->time = reqs[i].time;
@@ -97,6 +108,7 @@ struct requestTableElem *SplitBus::checkBusStatus(){
 
   struct requestTableElem *ret = (struct requestTableElem *) malloc(sizeof(struct requestTableElem));
   ret->core_num = -1;
+  ret->restart_cores = 0;
 
   for (int i = 0; i < MAX_OUTSTANDING_REQ; i++){
     if (!reqs[i].done){
@@ -105,7 +117,6 @@ struct requestTableElem *SplitBus::checkBusStatus(){
       else {
         reqs[i].done = true;
         num_requests--;
-        //ret = &reqs[i];
         ret->done = reqs[i].done;
         ret->core_num = reqs[i].core_num;
         ret->time = reqs[i].time;

@@ -6,9 +6,9 @@
 #include <string.h>
 
 enum instruction_type{
-    BEGIN,
-    WORK,
-    COMMIT
+  BEGIN,
+  WORK,
+  COMMIT
 };
 
 class Instruction {

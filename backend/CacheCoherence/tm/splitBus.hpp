@@ -10,6 +10,7 @@ struct requestTableElem {
   int core_num;
   int time;
   request_t req;
+  uint64_t restart_cores; //bit shows which core needs to restart
   uint64_t addr;
 };
 

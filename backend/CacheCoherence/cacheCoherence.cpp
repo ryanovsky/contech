@@ -170,7 +170,7 @@ void CacheCoherence::run()
             if(req_result->ACK == false){
               printf("NACK\n");
               //push back onto the queue
-                gt->memReqQ.push_front(mrc);
+              gt->memReqQ.push_front(mrc);
             }
           }
           else {
@@ -234,7 +234,7 @@ void CacheCoherence::run()
           if(req_result->ACK == false){
             printf("NACK\n");
             //push back onto the queue
-                gt->memReqQ.push_front(mrc);
+            gt->memReqQ.push_front(mrc);
           }
         }
         else {

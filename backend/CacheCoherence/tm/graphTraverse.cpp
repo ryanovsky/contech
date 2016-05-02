@@ -72,11 +72,11 @@ int GraphTraverse::getNextMemoryRequest(Instruction &nextReq)
 {
   if(!memReqQ.empty()){
     nextReq = memReqQ.front();
-     memReqQ.pop();
+    memReqQ.pop();
     return 1;
   }
   else {
-      nextReq.instr = WORK;
-      return 0;
+    nextReq.instr = WORK;
+    return 0;
   }
 }
