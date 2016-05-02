@@ -39,8 +39,17 @@ struct requestTableElem *SplitBus::sendMsgToBus(int core_num, request_t request,
 
   //which transactions need to restart
   for (int i = 0; i < num_proc; i++){
-    if (caches[i]->rwset.find(addr) != caches[i]->rwset.end()){
-      ret->restart_cores |= (1<<i);
+    std::queue<Instruction, std::deque<Instruction>> temp;
+    while (!caches[i]->rwset.empty()){
+      if (caches[i]->rwset.front().addr == addr){
+        ret->restart_cores |= (1<<i);
+      }
+      temp.push(caches[i]->rwset.front());
+      caches[i]->rwset.pop();
+    }
+    while (!temp.empty()){
+      caches[i]->rwset.push(temp.front());
+      temp.pop();
     }
   }
 

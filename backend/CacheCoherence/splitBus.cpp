@@ -16,6 +16,10 @@ SplitBus::SplitBus(SimpleCache **c, Memory *m, Time *t, int np){
   reqs = (struct requestTableElem *) malloc(MAX_OUTSTANDING_REQ * sizeof(struct requestTableElem));
   for (int i = 0; i < MAX_OUTSTANDING_REQ; i++){
     reqs[i].done = true;
+    reqs[i].ACK = false;
+    reqs[i].core_num = -1;
+    reqs[i].time = 0;
+    reqs[i].addr = 0;
   }
 }
 

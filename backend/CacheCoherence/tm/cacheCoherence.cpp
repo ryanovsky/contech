@@ -40,26 +40,54 @@ void CacheCoherence::run()
 {
   Instruction mrc;
   uint32_t ctid = 0;
-  uint32_t prev_ctid = ctid;
+  //uint32_t prev_ctid = ctid;
   request_t req;
   bool sendMsg = false;
-  bool next_cycle = false;
   int g_inprogress = 0;
+  int Q_iter = 0;
 
-  while ((g_inprogress = gt->getNextMemoryRequest(mrc)) || interconnect->num_requests){
-    printf("g_inprogress:%d, num_requests:%d\n", g_inprogress, interconnect->num_requests);
+  //do {
+  while (1){
+    if (!(g_inprogress = gt->getNextMemoryRequest(mrc)) && !interconnect->num_requests){
+      bool all_empty = true;
+      for (int i = 0; i < num_processors; i++){
+        all_empty = all_empty && tempQ[i].empty();
+      }
+      if (all_empty) break;
+    }
+    //printf("g_inprogress:%d, num_requests:%d\n", g_inprogress, interconnect->num_requests);
     ctid = (uint32_t)(mrc.core_num);
     bool rw = false;
     bool shared = false;
 
-    tempQ[ctid].push(mrc);
-    mrc = tempQ[ctid].front();
-    tempQ[ctid].pop();
+    if(g_inprogress){
+      tempQ[ctid].push(mrc);
+      mrc = tempQ[ctid].front();
+      tempQ[ctid].pop();
+      ctid = mrc.core_num;
+    }
+    else{
+      bool all_empty = true;
+      for (int i = 0; i < num_processors; i++){
+        if (!tempQ[i].empty()){
+          Q_iter = i;
+          all_empty = false;
+          break;
+        }
+      }
+      if (!all_empty){
+        mrc = tempQ[Q_iter].front();
+        ctid = mrc.core_num;
+        tempQ[Q_iter].pop();
+        g_inprogress = 1;
+      }
+    }
+
+
 
     //update time
     if (visited[ctid] && g_inprogress){
       timer->time++;
-      next_cycle == true;
       for(int i = 0; i < num_processors; i++){
         visited[i] = false;
       }
@@ -67,10 +95,10 @@ void CacheCoherence::run()
     visited[ctid] = true;
 
     SimpleCache *curCache = sharedCache[ctid];
+    curCache->rwset.push(mrc);
 
     if (mrc.instr == BEGIN){
-      curCache->rwset.clear();
-
+      //curCache->rwset.clear();
       struct requestTableElem *req_result = interconnect->checkBusStatus();
       if (req_result) timer->time++;
       if (req_result->core_num != -1){
@@ -84,7 +112,7 @@ void CacheCoherence::run()
       free(req_result);
     }
     else if (mrc.instr == WORK){
-      curCache->rwset[mrc.addr] = mrc;
+      //curCache->rwset[mrc.addr] = mrc;
 
       struct requestTableElem *req_result = interconnect->checkBusStatus();
       if (req_result) timer->time++;
@@ -99,18 +127,17 @@ void CacheCoherence::run()
       free(req_result);
     }
     else if (mrc.instr == COMMIT){
-      // update cache for everything in rwset
-      for (auto it = curCache->rwset.begin(); it != curCache->rwset.end(); ++it){
-        uint64_t address = it->first;
-        Instruction curmrc = it->second;
-
-        if (curmrc.write)
-        {
+      while (!curCache->rwset.empty()){
+        Instruction curmrc = curCache->rwset.front();
+        curCache->rwset.pop();
+        if(curmrc.instr != WORK){
+          continue;
+        }
+        uint64_t address = curmrc.addr;
+        if (curmrc.write){
           rw = true;
           req = BUSRDX;
-        }
-        else
-        {
+        } else {
           rw = false;
           req = BUSRD;
         }
@@ -119,27 +146,33 @@ void CacheCoherence::run()
         cache_state came_from = curCache->checkState(address);
         struct requestTableElem *req_result;
 
-        if (g_inprogress && (came_from == INVALID || (came_from == SHARED && rw))){
+        if ((g_inprogress) && (came_from == INVALID || (came_from == SHARED && rw))){
           sendMsg = true;
           req_result = interconnect->sendMsgToBus(ctid, req, address);
-          if(!req_result->ACK){
-            printf("NACK\n");
-            //push back onto the queue
-          }
+          if(!req_result->ACK) printf("NACK\n");
           if (req_result->restart_cores){
             //need to go through and restart transactions
-            for(int i = 0; i < num_processors; i ++){
+            for(int i = 0; i < num_processors; i++){
               if((req_result->restart_cores >> i) & 1){
                 //put everything in the rwset into tempQ
-                for(int iterate = 0; iterate < sharedCache[i]->rwset.size(); iterate ++){
-                  tempQ[ctid].push(sharedCache[i]->rwset[iterate]);
+                std::queue<Instruction, std::deque<Instruction>> temp;
+                while (!tempQ[i].empty()){
+                  temp.push(tempQ[i].front());
+                  tempQ[i].pop();
                 }
-                sharedCache[i]->rwset.clear();
+
+                while (!sharedCache[i]->rwset.empty()){
+                  tempQ[i].push(sharedCache[i]->rwset.front());
+                  sharedCache[i]->rwset.pop();
+                }
+                while (!temp.empty()){
+                  tempQ[i].push(temp.front());
+                  temp.pop();
+                }
               }
             }
           }
-        }
-        else {
+        } else {
           sendMsg = false;
           req_result = interconnect->checkBusStatus();
           if (req_result) timer->time++;
@@ -155,7 +188,8 @@ void CacheCoherence::run()
           p_stats[cn]->accesses++;
           assert_correctness(write, cn, req_result->addr);
         }
-        if (!sendMsg && g_inprogress){
+        if (!sendMsg){
+        //if (!sendMsg && g_inprogress){
           if (!sharedCache[ctid]->updateCache(rw, address, p_stats[ctid], shared))
             interconnect->mem->load();
           p_stats[ctid]->accesses++;
@@ -164,17 +198,15 @@ void CacheCoherence::run()
 
         free(req_result);
 
-        //assert everything in the cache is valid
-        for(int i = 0; i < num_processors; i++){
+        while (!curCache->rwset.empty())
+          curCache->rwset.pop();
+        ////assert everything in the cache is valid
+        for(int i = 0; i < num_processors; i++)
           assert(sharedCache[i]->checkValid());
-        }
+
       }
     }
-
-    //printf("time:%d, processor:%d, misses=%d, accesses=%d\n"
-    //    ,timer->time, ctid, p_stats[ctid]->misses, p_stats[ctid]->accesses);
-    //prev_ctid = ctid;
-  }
+  }// while ((g_inprogress = gt->getNextMemoryRequest(mrc)) || interconnect->num_requests){
 
   int accesses = 0;
   for(int i = 0; i < num_processors; i++){

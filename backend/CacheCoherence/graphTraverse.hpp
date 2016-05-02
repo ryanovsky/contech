@@ -6,24 +6,24 @@
 #include <vector>
 
 struct MemReq{
-    unsigned int ctid;
-    bool isWrite;
-    char numOfBytes;
-    unsigned long int address;
-    unsigned int bbid;
+  unsigned int ctid;
+  bool isWrite;
+  char numOfBytes;
+  unsigned long int address;
+  unsigned int bbid;
 };
 
 typedef struct _ctid_current_state
 {
-    bool terminated;            // has this task terminated
-    contech::Task* currentTask;          // pointer to task being processed
-    contech::Task::basicBlockActionCollection::iterator currentBB;    //current basic block to next be processed
-    contech::Task::basicBlockActionCollection currentBBCol;           //hold the basic block collection for the end iterator
+  bool terminated;            // has this task terminated
+  contech::Task* currentTask;          // pointer to task being processed
+  contech::Task::basicBlockActionCollection::iterator currentBB;    //current basic block to next be processed
+  contech::Task::basicBlockActionCollection currentBBCol;           //hold the basic block collection for the end iterator
 } ctid_current_state, *pctid_current_state;
 
 class MemReqContainer
 {
-public:
+  public:
     vector <contech::MemoryAction> mav;
     unsigned int bbid;
     unsigned int ctid;
@@ -33,7 +33,7 @@ public:
 
 class GraphTraverse
 {
-public:
+  public:
     GraphTraverse(char*);
     ~GraphTraverse();
 

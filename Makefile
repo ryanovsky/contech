@@ -6,6 +6,7 @@ backend/CommTracker \
 backend/Statistics \
 backend/Comm2 \
 backend/CacheCoherence \
+backend/CacheCoherence/tm \
 backend/TaskGraphFrontEnd \
 backend/Heltech \
 backend/Harmony \

@@ -58,7 +58,7 @@ class SimpleCache
     static const uint64_t global_b = 6;
     uint64_t global_s;
     int core_num;
-    std::unordered_map<uint64_t, Instruction> rwset;
+    std::queue<Instruction, std::deque<Instruction>> rwset;
 
     SimpleCache();
     SimpleCache(uint64_t, uint64_t);
