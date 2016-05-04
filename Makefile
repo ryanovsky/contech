@@ -4,6 +4,7 @@ common/runtime \
 common/taskLib \
 backend/CommTracker \
 backend/Statistics \
+backend/SCacheOrder \
 backend/Comm2 \
 backend/CacheCoherence \
 backend/CacheCoherence/tm \
