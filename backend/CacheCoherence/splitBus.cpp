@@ -39,7 +39,6 @@ struct requestTableElem *SplitBus::sendMsgToBus(int core_num, request_t request,
   if (num_requests >= MAX_OUTSTANDING_REQ){
     printf("Too many outstanding requests!\n");
     // NACK to core to retry this request later
-    //return NULL;
   }
   else {
     int next_tag = 0;
@@ -64,8 +63,6 @@ struct requestTableElem *SplitBus::sendMsgToBus(int core_num, request_t request,
       else {
         reqs[i].done = true;
         num_requests--;
-        //ret = &reqs[i];
-        //memcpy(ret, &reqs[i], sizeof(struct requestTableElem));
         ret->done = reqs[i].done;
         ret->core_num = reqs[i].core_num;
         ret->time = reqs[i].time;
@@ -109,7 +106,6 @@ struct requestTableElem *SplitBus::checkBusStatus(){
       else {
         reqs[i].done = true;
         num_requests--;
-        //ret = &reqs[i];
         ret->done = reqs[i].done;
         ret->core_num = reqs[i].core_num;
         ret->time = reqs[i].time;

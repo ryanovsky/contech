@@ -7,7 +7,7 @@ CacheCoherence::CacheCoherence(char *fname, uint64_t c, uint64_t s){
   timer = new Time();
   gt = new GraphTraverse(fname);
   mem = new Memory(timer);
-  num_processors = 3;//gt->tg->getNumberOfContexts();
+  num_processors = 3;
   p_stats = (cache_stats_t **) malloc(sizeof(cache_stats_t*) * num_processors);
   sharedCache = (SimpleCache **) malloc(sizeof(SimpleCache*) * num_processors);
   visited = (bool *) malloc(sizeof(bool) * num_processors);
@@ -40,13 +40,11 @@ void CacheCoherence::run()
 {
   Instruction mrc;
   uint32_t ctid = 0;
-  //uint32_t prev_ctid = ctid;
   request_t req;
   bool sendMsg = false;
   int g_inprogress = 0;
   int Q_iter = 0;
 
-  //do {
   while (1){
     if (!(g_inprogress = gt->getNextMemoryRequest(mrc)) && !interconnect->num_requests){
       bool all_empty = true;
@@ -55,7 +53,6 @@ void CacheCoherence::run()
       }
       if (all_empty) break;
     }
-    //printf("g_inprogress:%d, num_requests:%d\n", g_inprogress, interconnect->num_requests);
     ctid = (uint32_t)(mrc.core_num);
     bool rw = false;
     bool shared = false;
@@ -83,8 +80,6 @@ void CacheCoherence::run()
       }
     }
 
-
-
     //update time
     if (visited[ctid] && g_inprogress){
       timer->time++;
@@ -98,7 +93,6 @@ void CacheCoherence::run()
     curCache->rwset.push(mrc);
 
     if (mrc.instr == BEGIN){
-      //curCache->rwset.clear();
       struct requestTableElem *req_result = interconnect->checkBusStatus();
       if (req_result) timer->time++;
       if (req_result->core_num != -1){
@@ -112,8 +106,6 @@ void CacheCoherence::run()
       free(req_result);
     }
     else if (mrc.instr == WORK){
-      //curCache->rwset[mrc.addr] = mrc;
-
       struct requestTableElem *req_result = interconnect->checkBusStatus();
       if (req_result) timer->time++;
       if (req_result->core_num != -1){
@@ -189,7 +181,6 @@ void CacheCoherence::run()
           assert_correctness(write, cn, req_result->addr);
         }
         if (!sendMsg){
-        //if (!sendMsg && g_inprogress){
           if (!sharedCache[ctid]->updateCache(rw, address, p_stats[ctid], shared))
             interconnect->mem->load();
           p_stats[ctid]->accesses++;
@@ -206,7 +197,7 @@ void CacheCoherence::run()
 
       }
     }
-  }// while ((g_inprogress = gt->getNextMemoryRequest(mrc)) || interconnect->num_requests){
+  }
 
   int accesses = 0;
   for(int i = 0; i < num_processors; i++){
@@ -230,13 +221,13 @@ void CacheCoherence::assert_correctness(bool write, uint64_t ctid, uint64_t addr
   else{
     //assert on read that no other processor is in the MODIFIED STATE
     for(int i = 0; i < num_processors; i++){
-      if(i == ctid); //assert(sharedCache[i]->checkState(address) == SHARED);
+      if(i == ctid);
       else assert(sharedCache[i]->checkState(address) != MODIFIED);
     }
     //if a processor moved into EXCLUSIVE, assert others aren't in shared
     if(sharedCache[ctid]->checkState(address) == EXCLUSIVE){
       for(int i = 0; i < num_processors; i++){
-        if(i == ctid); //assert(sharedCache[i]->checkState(address) == SHARED);
+        if(i == ctid);
         else {
           assert(sharedCache[i]->checkState(address) != SHARED);
         }

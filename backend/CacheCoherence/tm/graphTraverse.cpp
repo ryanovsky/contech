@@ -14,8 +14,6 @@ GraphTraverse::GraphTraverse(char *str){
     int threadnum = atoi(threadnumber);
     uint64_t addr = atoi(address);
 
-    //printf("%d %d %s\n", threadnum, addr, instr);
-
     Instruction cur;
     if (!strcmp(instr, "Xbegin")){
       cur.instr = BEGIN;

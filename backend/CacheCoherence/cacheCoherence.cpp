@@ -42,7 +42,6 @@ void CacheCoherence::run()
   uint32_t ctid = 0;
   uint32_t prev_ctid = ctid;
   request_t req;
-  //struct requestTableElem *req_result;
   bool sendMsg = false;
   bool next_cycle = false;
 
@@ -90,7 +89,6 @@ void CacheCoherence::run()
 
       if (ma.type == action_type_malloc)
       {
-        //printf("malloc -- %d\n", memOpPos);
         uint64_t addr = ((MemoryAction)(*iReq)).addr;
         ++iReq;
 
@@ -103,7 +101,6 @@ void CacheCoherence::run()
         uint64_t srcAddress = 0;
         uint64_t bytesToAccess = 0;
 
-        //printf("memcpy -- %d\n", memOpPos);
         ++iReq;
         ma = *iReq;
         if (ma.type == action_type_memcpy)
@@ -216,7 +213,6 @@ void CacheCoherence::run()
         // Reduce the memory accesses into 8 byte requests
         accessBytes = (numOfBytes > 8) ? 8 : numOfBytes;
         numOfBytes -= accessBytes;
-        //(p_stats[ctid])->accesses++;
 
         if (ma.type == action_type_mem_write)
         {
@@ -275,10 +271,6 @@ void CacheCoherence::run()
       assert(sharedCache[i]->checkValid());
     }
 
-    //printf("time:%d, processor:%d, misses=%d, accesses=%d\n"
-    //    ,timer->time, ctid, p_stats[ctid]->misses, p_stats[ctid]->accesses);
-    //prev_ctid = ctid;
-
     if(next_cycle){
       next_cycle = false;
       if(mrc.locked){
@@ -311,13 +303,13 @@ void CacheCoherence::assert_correctness(bool write, uint64_t ctid, uint64_t addr
   else{
     //assert on read that no other processor is in the MODIFIED STATE
     for(int i = 0; i < num_processors; i++){
-      if(i == ctid); //assert(sharedCache[i]->checkState(address) == SHARED);
+      if(i == ctid);
       else assert(sharedCache[i]->checkState(address) != MODIFIED);
     }
     //if a processor moved into EXCLUSIVE, assert others aren't in shared
     if(sharedCache[ctid]->checkState(address) == EXCLUSIVE){
       for(int i = 0; i < num_processors; i++){
-        if(i == ctid); //assert(sharedCache[i]->checkState(address) == SHARED);
+        if(i == ctid);
         else {
           assert(sharedCache[i]->checkState(address) != SHARED);
         }
