@@ -37,7 +37,7 @@ struct requestTableElem *SplitBus::sendMsgToBus(int core_num, request_t request,
   bool ack = (num_requests < MAX_OUTSTANDING_REQ) ? true : false;
   ret->ACK = ack;
   if (num_requests >= MAX_OUTSTANDING_REQ){
-    printf("Too many outstanding requests!\n");
+    //printf("Too many outstanding requests!\n");
     // NACK to core to retry this request later
   }
   else {

@@ -110,7 +110,7 @@ void CacheCoherence::run()
           ma = *iReq;
         }
 
-        assert(ma.type == action_type_size);
+        //assert(ma.type == action_type_size);
         bytesToAccess = ma.addr;
 
         char accessSize = 0;
@@ -126,7 +126,7 @@ void CacheCoherence::run()
               sendMsg = true;
               req_result = interconnect->sendMsgToBus(ctid, req, srcAddress);
               if(req_result->ACK == false){
-                printf("NACK\n");
+                //printf("NACK\n");
                 //push back onto the queue
                 gt->memReqQ.push_front(mrc);
               }
@@ -147,14 +147,14 @@ void CacheCoherence::run()
 
               srcAddress += accessSize;
               (p_stats[cn])->accesses++;
-              assert_correctness(write, cn, req_result->addr);
+              //assert_correctness(write, cn, req_result->addr);
             }
             if (!sendMsg){
               if (!(sharedCache[ctid])->updateCache(false, srcAddress, p_stats[ctid], shared))
                 interconnect->mem->load();
               srcAddress += accessSize;
               (p_stats[ctid])->accesses++;
-              assert_correctness(false, ctid, srcAddress);
+              //assert_correctness(false, ctid, srcAddress);
             }
             free(req_result);
           }
@@ -168,7 +168,7 @@ void CacheCoherence::run()
             sendMsg = true;
             req_result = interconnect->sendMsgToBus(ctid, req, dstAddress);
             if(req_result->ACK == false){
-              printf("NACK\n");
+              //printf("NACK\n");
               //push back onto the queue
               gt->memReqQ.push_front(mrc);
             }
@@ -187,7 +187,7 @@ void CacheCoherence::run()
             if (!(sharedCache[cn])->updateCache(write, req_result->addr, p_stats[cn], shared))
               interconnect->mem->load();
             (p_stats[cn])->accesses++;
-            assert_correctness(write, cn, req_result->addr);
+            //assert_correctness(write, cn, req_result->addr);
           }
 
           free(req_result);
@@ -196,7 +196,7 @@ void CacheCoherence::run()
             if (!(sharedCache[ctid])->updateCache(true, dstAddress, p_stats[ctid], shared))
               interconnect->mem->load();
             (p_stats[ctid])->accesses++;
-            assert_correctness(true, ctid, dstAddress);
+            //assert_correctness(true, ctid, dstAddress);
           }
 
           dstAddress += accessSize;
@@ -233,7 +233,7 @@ void CacheCoherence::run()
           sendMsg = true;
           req_result = interconnect->sendMsgToBus(ctid, req, address);
           if(!req_result->ACK){
-            printf("NACK\n");
+            //printf("NACK\n");
             //push back onto the queue
             gt->memReqQ.push_front(mrc);
           }
@@ -252,13 +252,13 @@ void CacheCoherence::run()
           if (!(sharedCache[cn])->updateCache(write, req_result->addr, p_stats[cn], shared))
             interconnect->mem->load();
           (p_stats[cn])->accesses++;
-          assert_correctness(write, cn, req_result->addr);
+          //assert_correctness(write, cn, req_result->addr);
         }
         if (!sendMsg){
           if (!(sharedCache[ctid])->updateCache(rw, address, p_stats[ctid], shared))
             interconnect->mem->load();
           (p_stats[ctid])->accesses++;
-          assert_correctness(rw, ctid, address);
+          //assert_correctness(rw, ctid, address);
         }
         free(req_result);
 
@@ -266,27 +266,31 @@ void CacheCoherence::run()
       } while (numOfBytes > 0);
     }
 
+    /*
     //assert everything in the cache is valid
     for(int i = 0; i < num_processors; i++){
       assert(sharedCache[i]->checkValid());
     }
+    */
 
     if(next_cycle){
       next_cycle = false;
       if(mrc.locked){
         //assert it was in the locked table
-        assert(lockedVals.find(mrc.mav.begin()->addr) != lockedVals.end());
+        //assert(lockedVals.find(mrc.mav.begin()->addr) != lockedVals.end());
         //remove from the locked table
         lockedVals.erase(mrc.mav.begin()->addr);
       }
     }
   }
   int accesses = 0;
+  int misses = 0;
   for(int i = 0; i < num_processors; i++){
     printf("cache %d accesses:%d, misses:%d\n", i, (p_stats[i])->accesses, (p_stats[i])->misses);
     accesses = accesses + (p_stats[i])->accesses;
+    misses = misses + (p_stats[i])->misses;
   }
-  printf("total access:%d total time:%d \n", accesses, timer->time);
+  printf("total access:%d total misses:%d total time:%d \n", accesses, misses, timer->time);
 }
 
 
