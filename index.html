@@ -99,46 +99,52 @@ Contech appeared as a tutorial at IISWC 2015.</p>
 
 <p>Equal work was performed by both project members. We met up and each did all of the work together.</p>
 
-<pre><code>
-#Project Checkpoint
-### Summary
-We are going to implement a backend application for Contech that will simulate the MESI protocol on a split transaction bus. We will then use our simulation to measure bus traffic and contention.
+<h1>
+<a id="project-checkpoint" class="anchor" href="#project-checkpoint" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Project Checkpoint</h1>
 
-### Schedule
-April 4-10: Contech Research and basic MSI for quad-core
+<h3>
+<a id="summary-1" class="anchor" href="#summary-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Summary</h3>
+
+<p>We are going to implement a backend application for Contech that will simulate the MESI protocol on a split transaction bus. We will then use our simulation to measure bus traffic and contention.</p>
+
+<h3>
+<a id="schedule" class="anchor" href="#schedule" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Schedule</h3>
+
+<p>April 4-10: Contech Research and basic MSI for quad-core
 April 11-17: Implement MESI
 April 18-20: Change the ordering that memory goes to the bus
 April 21-26: Split transaction
 April 27 - May 2: Implement a ring interconnect 
-May 3- 9: Create a presentation, do analysis, compare the ring to the split transaction memory bus
+May 3- 9: Create a presentation, do analysis, compare the ring to the split transaction memory bus</p>
 
-### Completed work so far
-We have learned how to use Contech.  Initially, our simulation traverses a contech TaskGraph and orders the memory requests based on when they would be completed.  We then begin simulating the MESI protocol, by sending requests to the bus, which updates the state of all the caches.  Once the bus returns, then the given memory request can be put in the owners cache.  As of now, we arbitrarily chose how many clock cycles each event will take.  These events include a memory flush, memory load, and L1 cache hit.
+<h3>
+<a id="completed-work-so-far" class="anchor" href="#completed-work-so-far" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Completed work so far</h3>
 
-We still have a lot of work that needs to be done.  First we have to reorder the way that memory is sent to the bus.  We have to implement a split transaction bus, and then look into creating a ring bus as well.
+<p>We have learned how to use Contech.  Initially, our simulation traverses a contech TaskGraph and orders the memory requests based on when they would be completed.  We then begin simulating the MESI protocol, by sending requests to the bus, which updates the state of all the caches.  Once the bus returns, then the given memory request can be put in the owners cache.  As of now, we arbitrarily chose how many clock cycles each event will take.  These events include a memory flush, memory load, and L1 cache hit.</p>
 
-We do not expect to come across any unknown challenges, but we still have to look into a ring bus in more detail, we believe it is just a matter of coding.  After we finish implementing the split transaction bus, we may choose to not do the ring bus but instead do directory based cache coherence (we do not want to lock ourselves into the ring idea).
+<p>We still have a lot of work that needs to be done.  First we have to reorder the way that memory is sent to the bus.  We have to implement a split transaction bus, and then look into creating a ring bus as well.</p>
 
-### Results
-Our results will be a set of graphs and analysis, of hits and misses over time created from different Contech TaskGraphs. 
+<p>We do not expect to come across any unknown challenges, but we still have to look into a ring bus in more detail, we believe it is just a matter of coding.  After we finish implementing the split transaction bus, we may choose to not do the ring bus but instead do directory based cache coherence (we do not want to lock ourselves into the ring idea).</p>
 
+<h3>
+<a id="results-1" class="anchor" href="#results-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Results</h3>
 
+<p>Our results will be a set of graphs and analysis, of hits and misses over time created from different Contech TaskGraphs. </p>
 
+<h3>
+<a id="general-contech-info-1" class="anchor" href="#general-contech-info-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>General Contech info</h3>
 
+<p>Contech is a compiler-based (specifically <a href="http://llvm.org">LLVM</a>) instrumentation, designed to efficiently record the execution trace, memory accesses, and parallel interactions of a program.  The instrumentation has been tested across programs written in C, C++, and Fortran, as well as those using pthreads, OpenMP, and MPI.</p>
 
-### General Contech info
-Contech is a compiler-based (specifically [LLVM](http://llvm.org)) instrumentation, designed to efficiently record the execution trace, memory accesses, and parallel interactions of a program.  The instrumentation has been tested across programs written in C, C++, and Fortran, as well as those using pthreads, OpenMP, and MPI.
+<p>Contech is documented in the <a href="https://github.com/bprail/contech/wiki/Contech">wiki</a>.</p>
 
-Contech is documented in the [wiki](https://github.com/bprail/contech/wiki/Contech).
+<p>Authors and Contributors
+<a href="https://github.com/bprail" class="user-mention">@bprail</a> is the software architect of this project.  Contributions have also been made by <a href="https://github.com/ehein6" class="user-mention">@ehein6</a>.  Additional components have been provided by <a href="https://github.com/caparrov" class="user-mention">@caparrov</a>.</p>
 
-Authors and Contributors
-@bprail is the software architect of this project.  Contributions have also been made by @ehein6.  Additional components have been provided by @caparrov.
+<p>Publication
+Contech has appeared in the journal, <a href="http://dx.doi.org/10.1145/2776893">ACM Transactions on Architecture and Code Optimization</a>.</p>
 
-Publication
-Contech has appeared in the journal, [ACM Transactions on Architecture and Code Optimization](http://dx.doi.org/10.1145/2776893).
-
-Contech appeared as a tutorial at [IISWC 2015](http://www.iiswc.org/iiswc2015/index.html).
-</code></pre>
+<p>Contech appeared as a tutorial at <a href="http://www.iiswc.org/iiswc2015/index.html">IISWC 2015</a>.</p>
       </section>
     </div>
 
