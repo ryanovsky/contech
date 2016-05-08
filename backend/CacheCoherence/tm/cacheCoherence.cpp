@@ -8,6 +8,8 @@ CacheCoherence::CacheCoherence(char *fname, uint64_t c, uint64_t s){
   gt = new GraphTraverse(fname);
   mem = new Memory(timer);
   num_processors = 3;
+  msgNotSent = 0;
+  msg = 0;
   p_stats = (cache_stats_t **) malloc(sizeof(cache_stats_t*) * num_processors);
   sharedCache = (SimpleCache **) malloc(sizeof(SimpleCache*) * num_processors);
   visited = (bool *) malloc(sizeof(bool) * num_processors);
@@ -141,6 +143,7 @@ void CacheCoherence::run()
         if ((g_inprogress) && (came_from == INVALID || (came_from == SHARED && rw))){
           sendMsg = true;
           req_result = interconnect->sendMsgToBus(ctid, req, address);
+          msg++;
           if(!req_result->ACK) printf("NACK\n");
           if (req_result->restart_cores){
             //need to go through and restart transactions
@@ -166,8 +169,8 @@ void CacheCoherence::run()
           }
         } else {
           sendMsg = false;
+          msgNotSent++;
           req_result = interconnect->checkBusStatus();
-          if (req_result) timer->time++;
         }
 
         shared = interconnect->shared;
@@ -200,11 +203,19 @@ void CacheCoherence::run()
   }
 
   int accesses = 0;
+  int misses = 0;
+  int invalidate = 0;
   for(int i = 0; i < num_processors; i++){
     printf("cache %d accesses:%d, misses:%d\n", i, (p_stats[i])->accesses, (p_stats[i])->misses);
+    printf("cache %d invalidate:%d\n", i, sharedCache[i]->invalidate_count);
+    invalidate += sharedCache[i]->invalidate_count;
     accesses = accesses + (p_stats[i])->accesses;
+    misses = misses + (p_stats[i])->misses;
   }
-  printf("total access:%d total time:%d\n", accesses, timer->time);
+  printf("total access:%d total time:%d \n", accesses, timer->time);
+  printf("total hits:%d total misses:%d \n", accesses-misses, misses);
+  //printf("messages sent on bus:%d, messages not sent:%d\n", msgCounter, didntSend);
+  printf("number of times invalidated:%d\n", invalidate);
 }
 
 

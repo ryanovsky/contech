@@ -8,6 +8,8 @@ class CacheCoherence
 {
   public:
     int num_processors;
+    int msgNotSent;
+    int msg;
     bool *visited;
     Time *timer;
     SplitBus *interconnect;

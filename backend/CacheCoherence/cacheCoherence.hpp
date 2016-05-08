@@ -18,7 +18,7 @@ class CacheCoherence
     std::map <contech::ContextId, SimpleCache> contextCacheState;
     std::map <uint64_t, bool> lockedVals;
     std::map <contech::ContextId, MemReqContainer> tempQ;
-    SimpleCache ** sharedCache;
+    SimpleCache ** caches;
     cache_stats_t ** p_stats;
 
     CacheCoherence(char*, uint64_t, uint64_t s);

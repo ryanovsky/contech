@@ -58,6 +58,7 @@ class SimpleCache
     static const uint64_t global_b = 6;
     uint64_t global_s;
     int core_num;
+    int invalidate_count;
     std::queue<Instruction, std::deque<Instruction>> rwset;
 
     SimpleCache();

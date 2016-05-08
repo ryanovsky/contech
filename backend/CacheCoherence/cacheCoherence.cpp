@@ -9,17 +9,17 @@ CacheCoherence::CacheCoherence(char *fname, uint64_t c, uint64_t s){
   mem = new Memory(timer);
   num_processors = gt->tg->getNumberOfContexts();
   p_stats = (cache_stats_t **) malloc(sizeof(cache_stats_t*) * num_processors);
-  sharedCache = (SimpleCache **) malloc(sizeof(SimpleCache*) * num_processors);
+  caches = (SimpleCache **) malloc(sizeof(SimpleCache*) * num_processors);
   visited = (bool *) malloc(sizeof(bool) * num_processors);
 
   for(int i = 0; i < num_processors; i++){
-    sharedCache[i] = new SimpleCache(c, s, i);
+    caches[i] = new SimpleCache(c, s, i);
     p_stats[i] = (cache_stats_t *) malloc(sizeof(struct cache_stats_t));
     p_stats[i]->accesses = 0;
     p_stats[i]->misses = 0;
     visited[i] = false;
   }
-  interconnect = new SplitBus(sharedCache, mem, timer, num_processors);
+  interconnect = new SplitBus(caches, mem, timer, num_processors);
 }
 
 CacheCoherence::~CacheCoherence(){
@@ -27,11 +27,11 @@ CacheCoherence::~CacheCoherence(){
   delete gt;
   delete mem;
   for(int i = 0; i < num_processors; i++){
-    delete sharedCache[i];
+    delete caches[i];
     free(p_stats[i]);
   }
   free(p_stats);
-  free(sharedCache);
+  free(caches);
   free(visited);
   delete interconnect;
 }
@@ -123,7 +123,7 @@ void CacheCoherence::run()
           if (srcAddress != 0){
             struct requestTableElem *req_result;
             // broadcast to bus if invalid state
-            if (sharedCache[ctid]->checkState(srcAddress) == INVALID){
+            if (caches[ctid]->checkState(srcAddress) == INVALID){
               req = BUSRD;
               sendMsg = true;
               msgCounter ++;
@@ -145,7 +145,7 @@ void CacheCoherence::run()
             if (req_result->core_num != -1){
               bool write = req_result->req == BUSRDX;
               int cn = req_result->core_num;
-              if (!(sharedCache[cn])->updateCache(write, req_result->addr, p_stats[cn], shared))
+              if (!(caches[cn])->updateCache(write, req_result->addr, p_stats[cn], shared))
                 interconnect->mem->load();
 
               srcAddress += accessSize;
@@ -153,7 +153,7 @@ void CacheCoherence::run()
               //assert_correctness(write, cn, req_result->addr);
             }
             if (!sendMsg){
-              if (!(sharedCache[ctid])->updateCache(false, srcAddress, p_stats[ctid], shared))
+              if (!(caches[ctid])->updateCache(false, srcAddress, p_stats[ctid], shared))
                 interconnect->mem->load();
               srcAddress += accessSize;
               (p_stats[ctid])->accesses++;
@@ -165,8 +165,8 @@ void CacheCoherence::run()
           struct requestTableElem *req_result;
 
           //if in invalid or shared state
-          if(sharedCache[ctid]->checkState(dstAddress) == INVALID ||
-              sharedCache[ctid]->checkState(dstAddress) == SHARED){
+          if(caches[ctid]->checkState(dstAddress) == INVALID ||
+              caches[ctid]->checkState(dstAddress) == SHARED){
             req = BUSRDX;
             sendMsg = true;
             msgCounter ++;
@@ -188,7 +188,7 @@ void CacheCoherence::run()
           if (req_result->core_num != -1){
             bool write = req_result->req == BUSRDX;
             int cn = req_result->core_num;
-            if (!(sharedCache[cn])->updateCache(write, req_result->addr, p_stats[cn], shared))
+            if (!(caches[cn])->updateCache(write, req_result->addr, p_stats[cn], shared))
               interconnect->mem->load();
             (p_stats[cn])->accesses++;
             //assert_correctness(write, cn, req_result->addr);
@@ -197,7 +197,7 @@ void CacheCoherence::run()
           free(req_result);
 
           if (!sendMsg){
-            if (!(sharedCache[ctid])->updateCache(true, dstAddress, p_stats[ctid], shared))
+            if (!(caches[ctid])->updateCache(true, dstAddress, p_stats[ctid], shared))
               interconnect->mem->load();
             (p_stats[ctid])->accesses++;
             //assert_correctness(true, ctid, dstAddress);
@@ -232,7 +232,7 @@ void CacheCoherence::run()
         struct requestTableElem *req_result;
 
         // only send message too bus if (shared and write) or invalid
-        cache_state came_from = sharedCache[ctid]->checkState(address);
+        cache_state came_from = caches[ctid]->checkState(address);
         if(came_from == INVALID || (came_from == SHARED && rw)){
           sendMsg = true;
           msgCounter ++;
@@ -254,13 +254,13 @@ void CacheCoherence::run()
         if (req_result->core_num != -1){
           bool write = req_result->req == BUSRDX;
           int cn = req_result->core_num;
-          if (!(sharedCache[cn])->updateCache(write, req_result->addr, p_stats[cn], shared))
+          if (!(caches[cn])->updateCache(write, req_result->addr, p_stats[cn], shared))
             interconnect->mem->load();
           (p_stats[cn])->accesses++;
           //assert_correctness(write, cn, req_result->addr);
         }
         if (!sendMsg){
-          if (!(sharedCache[ctid])->updateCache(rw, address, p_stats[ctid], shared))
+          if (!(caches[ctid])->updateCache(rw, address, p_stats[ctid], shared))
             interconnect->mem->load();
           (p_stats[ctid])->accesses++;
           //assert_correctness(rw, ctid, address);
@@ -274,7 +274,7 @@ void CacheCoherence::run()
     /*
     //assert everything in the cache is valid
     for(int i = 0; i < num_processors; i++){
-      assert(sharedCache[i]->checkValid());
+      assert(caches[i]->checkValid());
     }
     */
 
@@ -290,14 +290,18 @@ void CacheCoherence::run()
   }
   int accesses = 0;
   int misses = 0;
+  int invalidate = 0;
   for(int i = 0; i < num_processors; i++){
     printf("cache %d accesses:%d, misses:%d\n", i, (p_stats[i])->accesses, (p_stats[i])->misses);
+    printf("cache %d invalidate:%d\n", i, caches[i]->invalidate_count);
+    invalidate += caches[i]->invalidate_count;
     accesses = accesses + (p_stats[i])->accesses;
     misses = misses + (p_stats[i])->misses;
   }
   printf("total access:%d total time:%d \n", accesses, timer->time);
   printf("total hits:%d total misses:%d \n", accesses-misses, misses);
   printf("messages sent on bus:%d, messages not sent:%d\n", msgCounter, didntSend);
+  printf("number of times invalidated:%d\n", invalidate);
 }
 
 
@@ -305,9 +309,9 @@ void CacheCoherence::assert_correctness(bool write, uint64_t ctid, uint64_t addr
   if(write){
     for(int i = 0; i < num_processors; i++){
       //assert on write that the current processor is in the MODIFIED state alone
-      if(i == ctid) assert(sharedCache[i]->checkState(address) == MODIFIED);
+      if(i == ctid) assert(caches[i]->checkState(address) == MODIFIED);
       else {
-        assert(sharedCache[i]->checkState(address) == INVALID);
+        assert(caches[i]->checkState(address) == INVALID);
       }
     }
   }
@@ -315,14 +319,14 @@ void CacheCoherence::assert_correctness(bool write, uint64_t ctid, uint64_t addr
     //assert on read that no other processor is in the MODIFIED STATE
     for(int i = 0; i < num_processors; i++){
       if(i == ctid);
-      else assert(sharedCache[i]->checkState(address) != MODIFIED);
+      else assert(caches[i]->checkState(address) != MODIFIED);
     }
     //if a processor moved into EXCLUSIVE, assert others aren't in shared
-    if(sharedCache[ctid]->checkState(address) == EXCLUSIVE){
+    if(caches[ctid]->checkState(address) == EXCLUSIVE){
       for(int i = 0; i < num_processors; i++){
         if(i == ctid);
         else {
-          assert(sharedCache[i]->checkState(address) != SHARED);
+          assert(caches[i]->checkState(address) != SHARED);
         }
       }
     }

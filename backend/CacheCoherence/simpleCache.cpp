@@ -12,8 +12,6 @@ enum {LRU, NMRU_FIFO};
 static const char global_st = BLOCKING;
 static const char global_r = LRU;
 
-static uint32_t dbg_count[17] = {0};
-
 SimpleCache::SimpleCache()
 {
   cacheBlocks.resize(0x1 << (global_c - (global_s + global_b)));
@@ -42,6 +40,7 @@ SimpleCache::SimpleCache(uint64_t c, uint64_t s, int cn)
   accesses = 0;
 
   core_num = cn;
+  invalidate_count = 0;
 }
 
 void SimpleCache::printIndex(uint64_t idx)
@@ -191,6 +190,7 @@ bool SimpleCache::updateStatus(request_t request, uint64_t addr){
           flush = true;
         }
         it->state = INVALID;
+        invalidate_count++;
         //remove this from the cache
         cacheBlocks[idx].erase(it);
       }

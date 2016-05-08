@@ -42,6 +42,7 @@ SimpleCache::SimpleCache(uint64_t c, uint64_t s, int cn)
   accesses = 0;
 
   core_num = cn;
+  invalidate_count = 0;
 }
 
 void SimpleCache::printIndex(uint64_t idx)
@@ -191,6 +192,7 @@ bool SimpleCache::updateStatus(request_t request, uint64_t addr){
           flush = true;
         }
         it->state = INVALID;
+        invalidate_count++;
         //remove this from the cache
         cacheBlocks[idx].erase(it);
       }
