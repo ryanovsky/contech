@@ -5,9 +5,9 @@ Memory::Memory(Time *t){
 }
 
 void Memory::flush(){
-  //timer->time += 5;
+  timer->time ++;
 }
 
 void Memory::load(){
-  //timer->time += 5;
+  timer->time ++;
 }

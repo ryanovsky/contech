@@ -39,6 +39,8 @@ CacheCoherence::~CacheCoherence(){
 void CacheCoherence::run()
 {
   MemReqContainer mrc;
+  int msgCounter = 0;
+  int didntSend = 0;
   uint32_t ctid = 0;
   uint32_t prev_ctid = ctid;
   request_t req;
@@ -127,6 +129,7 @@ void CacheCoherence::run()
             if (sharedCache[ctid]->checkState(srcAddress) == INVALID){
               req = BUSRD;
               sendMsg = true;
+              msgCounter ++;
               req_result = interconnect->sendMsgToBus(ctid, req, srcAddress);
               if(req_result->ACK == false){
                 printf("NACK\n");
@@ -136,8 +139,8 @@ void CacheCoherence::run()
             }
             else {
               sendMsg = false;
+              didntSend ++;
               req_result = interconnect->checkBusStatus();
-              if (req_result) timer->time++;
             }
 
             shared = interconnect->shared;
@@ -169,6 +172,7 @@ void CacheCoherence::run()
               sharedCache[ctid]->checkState(dstAddress) == SHARED){
             req = BUSRDX;
             sendMsg = true;
+            msgCounter ++;
             req_result = interconnect->sendMsgToBus(ctid, req, dstAddress);
             if(req_result->ACK == false){
               printf("NACK\n");
@@ -178,8 +182,8 @@ void CacheCoherence::run()
           }
           else {
             sendMsg = false;
+            didntSend ++;
             req_result = interconnect->checkBusStatus();
-            if (req_result) timer->time++;
           }
 
           shared = interconnect->shared;
@@ -235,6 +239,7 @@ void CacheCoherence::run()
         cache_state came_from = sharedCache[ctid]->checkState(address);
         if(came_from == INVALID || (came_from == SHARED && rw)){
           sendMsg = true;
+          msgCounter ++;
           req_result = interconnect->sendMsgToBus(ctid, req, address);
           if(!req_result->ACK){
             printf("NACK\n");
@@ -244,8 +249,8 @@ void CacheCoherence::run()
         }
         else {
           sendMsg = false;
+          didntSend ++;
           req_result = interconnect->checkBusStatus();
-          if (req_result) timer->time++;
         }
 
         shared = interconnect->shared;
@@ -290,11 +295,15 @@ void CacheCoherence::run()
     }
   }
   int accesses = 0;
+  int misses = 0;
   for(int i = 0; i < num_processors; i++){
     printf("cache %d accesses:%d, misses:%d\n", i, (p_stats[i])->accesses, (p_stats[i])->misses);
     accesses = accesses + (p_stats[i])->accesses;
+    misses = misses + (p_stats[i])->misses;
   }
   printf("total access:%d total time:%d \n", accesses, timer->time);
+  printf("total hits:%d total misses:%d \n", accesses-misses, misses);
+  printf("messages send on bus:%d, messages not sent:%d\n", msgCounter, didntSend);
 }
 
 
