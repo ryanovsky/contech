@@ -44,7 +44,6 @@ void CacheCoherence::run()
   uint32_t ctid = 0;
   uint32_t prev_ctid = ctid;
   request_t req;
-  //struct requestTableElem *req_result;
   bool sendMsg = false;
   bool next_cycle = false;
 
@@ -92,7 +91,6 @@ void CacheCoherence::run()
 
       if (ma.type == action_type_malloc)
       {
-        //printf("malloc -- %d\n", memOpPos);
         uint64_t addr = ((MemoryAction)(*iReq)).addr;
         ++iReq;
 
@@ -105,7 +103,6 @@ void CacheCoherence::run()
         uint64_t srcAddress = 0;
         uint64_t bytesToAccess = 0;
 
-        //printf("memcpy -- %d\n", memOpPos);
         ++iReq;
         ma = *iReq;
         if (ma.type == action_type_memcpy)
@@ -115,7 +112,7 @@ void CacheCoherence::run()
           ma = *iReq;
         }
 
-        assert(ma.type == action_type_size);
+        //assert(ma.type == action_type_size);
         bytesToAccess = ma.addr;
 
         char accessSize = 0;
@@ -132,7 +129,7 @@ void CacheCoherence::run()
               msgCounter ++;
               req_result = interconnect->sendMsgToBus(ctid, req, srcAddress);
               if(req_result->ACK == false){
-                printf("NACK\n");
+                //printf("NACK\n");
                 //push back onto the queue
                 gt->memReqQ.push_front(mrc);
               }
@@ -153,14 +150,14 @@ void CacheCoherence::run()
 
               srcAddress += accessSize;
               (p_stats[cn])->accesses++;
-              assert_correctness(write, cn, req_result->addr);
+              //assert_correctness(write, cn, req_result->addr);
             }
             if (!sendMsg){
               if (!(sharedCache[ctid])->updateCache(false, srcAddress, p_stats[ctid], shared))
                 interconnect->mem->load();
               srcAddress += accessSize;
               (p_stats[ctid])->accesses++;
-              assert_correctness(false, ctid, srcAddress);
+              //assert_correctness(false, ctid, srcAddress);
             }
             free(req_result);
           }
@@ -175,7 +172,7 @@ void CacheCoherence::run()
             msgCounter ++;
             req_result = interconnect->sendMsgToBus(ctid, req, dstAddress);
             if(req_result->ACK == false){
-              printf("NACK\n");
+              //printf("NACK\n");
               //push back onto the queue
               gt->memReqQ.push_front(mrc);
             }
@@ -194,7 +191,7 @@ void CacheCoherence::run()
             if (!(sharedCache[cn])->updateCache(write, req_result->addr, p_stats[cn], shared))
               interconnect->mem->load();
             (p_stats[cn])->accesses++;
-            assert_correctness(write, cn, req_result->addr);
+            //assert_correctness(write, cn, req_result->addr);
           }
 
           free(req_result);
@@ -203,7 +200,7 @@ void CacheCoherence::run()
             if (!(sharedCache[ctid])->updateCache(true, dstAddress, p_stats[ctid], shared))
               interconnect->mem->load();
             (p_stats[ctid])->accesses++;
-            assert_correctness(true, ctid, dstAddress);
+            //assert_correctness(true, ctid, dstAddress);
           }
 
           dstAddress += accessSize;
@@ -220,7 +217,6 @@ void CacheCoherence::run()
         // Reduce the memory accesses into 8 byte requests
         accessBytes = (numOfBytes > 8) ? 8 : numOfBytes;
         numOfBytes -= accessBytes;
-        //(p_stats[ctid])->accesses++;
 
         if (ma.type == action_type_mem_write)
         {
@@ -242,7 +238,7 @@ void CacheCoherence::run()
           msgCounter ++;
           req_result = interconnect->sendMsgToBus(ctid, req, address);
           if(!req_result->ACK){
-            printf("NACK\n");
+            //printf("NACK\n");
             //push back onto the queue
             gt->memReqQ.push_front(mrc);
           }
@@ -261,13 +257,13 @@ void CacheCoherence::run()
           if (!(sharedCache[cn])->updateCache(write, req_result->addr, p_stats[cn], shared))
             interconnect->mem->load();
           (p_stats[cn])->accesses++;
-          assert_correctness(write, cn, req_result->addr);
+          //assert_correctness(write, cn, req_result->addr);
         }
         if (!sendMsg){
           if (!(sharedCache[ctid])->updateCache(rw, address, p_stats[ctid], shared))
             interconnect->mem->load();
           (p_stats[ctid])->accesses++;
-          assert_correctness(rw, ctid, address);
+          //assert_correctness(rw, ctid, address);
         }
         free(req_result);
 
@@ -275,20 +271,18 @@ void CacheCoherence::run()
       } while (numOfBytes > 0);
     }
 
+    /*
     //assert everything in the cache is valid
     for(int i = 0; i < num_processors; i++){
       assert(sharedCache[i]->checkValid());
     }
-
-    //printf("time:%d, processor:%d, misses=%d, accesses=%d\n"
-    //    ,timer->time, ctid, p_stats[ctid]->misses, p_stats[ctid]->accesses);
-    //prev_ctid = ctid;
+    */
 
     if(next_cycle){
       next_cycle = false;
       if(mrc.locked){
         //assert it was in the locked table
-        assert(lockedVals.find(mrc.mav.begin()->addr) != lockedVals.end());
+        //assert(lockedVals.find(mrc.mav.begin()->addr) != lockedVals.end());
         //remove from the locked table
         lockedVals.erase(mrc.mav.begin()->addr);
       }
@@ -303,7 +297,7 @@ void CacheCoherence::run()
   }
   printf("total access:%d total time:%d \n", accesses, timer->time);
   printf("total hits:%d total misses:%d \n", accesses-misses, misses);
-  printf("messages send on bus:%d, messages not sent:%d\n", msgCounter, didntSend);
+  printf("messages sent on bus:%d, messages not sent:%d\n", msgCounter, didntSend);
 }
 
 
@@ -320,13 +314,13 @@ void CacheCoherence::assert_correctness(bool write, uint64_t ctid, uint64_t addr
   else{
     //assert on read that no other processor is in the MODIFIED STATE
     for(int i = 0; i < num_processors; i++){
-      if(i == ctid); //assert(sharedCache[i]->checkState(address) == SHARED);
+      if(i == ctid);
       else assert(sharedCache[i]->checkState(address) != MODIFIED);
     }
     //if a processor moved into EXCLUSIVE, assert others aren't in shared
     if(sharedCache[ctid]->checkState(address) == EXCLUSIVE){
       for(int i = 0; i < num_processors; i++){
-        if(i == ctid); //assert(sharedCache[i]->checkState(address) == SHARED);
+        if(i == ctid);
         else {
           assert(sharedCache[i]->checkState(address) != SHARED);
         }

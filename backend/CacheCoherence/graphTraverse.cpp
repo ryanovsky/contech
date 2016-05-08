@@ -107,13 +107,11 @@ int GraphTraverse::populateQueue()
     for (auto begin = contechState.begin(), end = contechState.end(); begin != end; ++begin){ //2 for loop
       tempState = (begin->second);
 
-      //Task* t = tempState->currentTask;
       if(tempState->terminated){
         contechState.erase(begin);
         continue;
       }
 
-    //if(tempState->currentTask->getType() == task_type_sync) printf("synctype:%d\n", tempState->currentTask->getSyncType());
       //check if task is not type basic block
       if(tempState->currentTask->getType() == task_type_create ||
           tempState->currentTask->getType() == task_type_join ||
@@ -164,19 +162,19 @@ int GraphTraverse::populateQueue()
       if (tempState->currentBB == tempState->currentBBCol.end()) {//at the end of the basic block collection. Need a new task
         //if type sync need to save this address
         if(tempState->currentTask->getType() == task_type_sync){
-            MemReqContainer tReq;
-            tReq.mav.clear();
-            BasicBlockAction tbb = *f;
-            tReq.bbid = tbb.basic_block_id;
-            tReq.ctid = (unsigned int) tempState->currentTask->getContextId();
-            assert(tReq.ctid >= 0 && tReq.ctid < tg->getNumberOfContexts());
-            auto memOps = f.getMemoryActions();
-            MemoryAction ma = *(memOps.begin());
-            tReq.mav.push_back(ma);
-            tReq.locked = true;
-            memReqQ.push_back(tReq);
-            assert(tempState->currentTask->getSyncType() == sync_type_lock);
-          }
+          MemReqContainer tReq;
+          tReq.mav.clear();
+          BasicBlockAction tbb = *f;
+          tReq.bbid = tbb.basic_block_id;
+          tReq.ctid = (unsigned int) tempState->currentTask->getContextId();
+          assert(tReq.ctid >= 0 && tReq.ctid < tg->getNumberOfContexts());
+          auto memOps = f.getMemoryActions();
+          MemoryAction ma = *(memOps.begin());
+          tReq.mav.push_back(ma);
+          tReq.locked = true;
+          memReqQ.push_back(tReq);
+          assert(tempState->currentTask->getSyncType() == sync_type_lock);
+        }
 
 
         taskId = getSequenceTask(

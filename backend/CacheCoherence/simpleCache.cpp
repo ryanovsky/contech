@@ -16,12 +16,10 @@ static uint32_t dbg_count[17] = {0};
 
 SimpleCache::SimpleCache()
 {
-  //cacheBlocks.resize(0x1 << (SC_CACHE_SIZE - (SC_CACHE_ASSOC + SC_CACHE_LINE)));
   cacheBlocks.resize(0x1 << (global_c - (global_s + global_b)));
   read_misses = 0;
   write_misses = 0;
   accesses = 0;
-  //printf("Cache created: %d of %d\n", cacheBlocks.size(), 0x1 << global_s);
 }
 
 SimpleCache::SimpleCache(uint64_t c, uint64_t s)
@@ -73,7 +71,6 @@ bool SimpleCache::updateCacheLine(uint64_t idx, uint64_t tag, uint64_t offset, u
       if (write) {
         it->state = MODIFIED;
       }
-      //else it->state = SHARED;
       return true;
     }
     // Is this the LRU block?
