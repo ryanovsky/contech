@@ -4,11 +4,11 @@
   <head>
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <meta name="description" content="Contech : High-Performance, Parallel Program Instrumentation">
+    <meta name="description" content="A Cache Coherence Simulator with Transactional Memory : Using Contech">
 
     <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 
-    <title>Contech</title>
+    <title>A Cache Coherence Simulator with Transactional Memory</title>
   </head>
 
   <body>
@@ -18,8 +18,8 @@
         <header class="inner">
           <a id="forkme_banner" href="https://github.com/ryanovsky/contech">View on GitHub</a>
 
-          <h1 id="project_title">Contech</h1>
-          <h2 id="project_tagline">High-Performance, Parallel Program Instrumentation</h2>
+          <h1 id="project_title">A Cache Coherence Simulator with Transactional Memory</h1>
+          <h2 id="project_tagline">Using Contech</h2>
 
             <section id="downloads">
               <a class="zip_download_link" href="https://github.com/ryanovsky/contech/zipball/master">Download this project as a .zip file</a>
@@ -58,14 +58,26 @@
 <h3>
 <a id="approach" class="anchor" href="#approach" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Approach</h3>
 
-<p>The simulator is constructed to reflect the hardware, so each major component of the hardware can be seen in the software, where the overall simulator contains the caches, the interconnect, and main memory.</p>
+<p>The simulator is constructed to reflect the hardware, so each major component of the hardware can be seen in the software, where the overall simulator contains the caches, the interconnect, and the transactional memory layer. The system input is a Contech taskgraph, and the outputs are the cache coherence statistics.</p>
 
 <h4>
-<a id="other-titles" class="anchor" href="#other-titles" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Other Titles</h4>
+<a id="the-contech-taskgraph" class="anchor" href="#the-contech-taskgraph" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>The Contech Taskgraph</h4>
 
-<p>The simulator, written in C++, uses the input taskgraph file to create a list of memory accesses from each core. Special cases are made during runtime to handle locks and barriers and thread synchronization, that included a map of locked elements. Using the list of memory accesses, the simulator sends each individual processor its memory requests, and must mediate between each processor requesting data on the bus. To do so, each memory request is initially separated into 8 byte requests of either reads or writes (a mem copy is considered to be both). The simulator then must find the cache line that corresponds to the given address, and check the state that the cache line is in. Depending on the state and type of operation, the processor sends a request to the split bus according to the MESI protocol. The bus takes the request, and saves it on the request table. If the request table is full then the bus will return with a NACK, and a retry will have to occur. Once the request has been held for a given time period (modeling how long loading data from memory takes), the bus notifies all of the other processors about the request and each processor updates its L1 cache accordingly. The bus then returns to the simulator letting the requesting cache know that it can change its own state accordingly as well.</p>
+<p>The simulator, written in C++, uses the input taskgraph file to create a list of memory accesses from each core. Special cases are made during runtime to handle locks and barriers and thread synchronization, that included a map of locked elements.</p>
 
-<p>We started with a simple single core cache simulator, similar to what we created in the 15-213 cachelab assignment, that was provided in the contech github repo (Simple Cache) by Professor Railing.</p>
+<h4>
+<a id="the-cache" class="anchor" href="#the-cache" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>The Cache</h4>
+
+<p>We started with a simple single core cache simulator, similar to what we created in the 15-213 cachelab assignment, that was provided in the contech github repo (Simple Cache) by Professor Railing.
+Using the list of memory accesses from the taskgraph, the simulator sends each individual processor its memory requests, and must mediate between each processor requesting data on the bus. To do so, each memory request is initially separated into 8 byte requests of either reads or writes (a mem copy is considered to be both). The simulator then must find the cache line that corresponds to the given address, and check the state that the cache line is in. Depending on the state and type of operation, the processor sends a request to the split bus interconnect, according to the MESI protocol.</p>
+
+<h4>
+<a id="the-interconnect-a-split-transaction-bus" class="anchor" href="#the-interconnect-a-split-transaction-bus" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>The Interconnect: A Split Transaction Bus</h4>
+
+<p>The bus takes the request, and saves it on the request table. If the request table is full then the bus will return with a NACK, and a retry will have to occur. Once the request has been held for a given time period (modeling how long loading data from memory takes), the bus notifies all of the other processors about the request and each processor updates its L1 cache accordingly. The bus then returns to the simulator letting the requesting cache know that it can change its own state accordingly as well.</p>
+
+<h4>
+<a id="transactional-memory" class="anchor" href="#transactional-memory" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Transactional Memory</h4>
 
 <p>In order to simulate lazy optimistic transactional memory, on top of the MESI split bus, we first had to build a simple memory trace that mimicked transactions being sent. Each transaction had a read and write, simulating depositing and withdrawing from a bank, as an example. Upon a commit, each memory instruction that was supposed to have occured gets sent to the split bus, if needed, according to MESI protocol. When it is time for the bus to broadcast the message, each processor checks if any of the values in their read/write set conflict with the committed data according to the lazy optimistic protocol. If so the given processor must abort and restart its transaction by clearing its read/write set and beginning the operations again.</p>
 
@@ -96,8 +108,8 @@ Contech appeared as a tutorial at IISWC 2015.</p>
 
 <p>Equal work was performed by both project members. We met up and each did all of the work together.</p>
 
-<h1>
-<a id="project-checkpoint" class="anchor" href="#project-checkpoint" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Project Checkpoint</h1>
+<h2>
+<a id="project-checkpoint" class="anchor" href="#project-checkpoint" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Project Checkpoint</h2>
 
 <h3>
 <a id="summary-1" class="anchor" href="#summary-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Summary</h3>
@@ -148,7 +160,7 @@ Contech has appeared in the journal, <a href="http://dx.doi.org/10.1145/2776893"
     <!-- FOOTER  -->
     <div id="footer_wrap" class="outer">
       <footer class="inner">
-        <p class="copyright">Contech maintained by <a href="https://github.com/ryanovsky">ryanovsky</a></p>
+        <p class="copyright">A Cache Coherence Simulator with Transactional Memory maintained by <a href="https://github.com/ryanovsky">ryanovsky</a></p>
         <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
       </footer>
     </div>
