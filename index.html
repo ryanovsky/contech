@@ -86,6 +86,11 @@ The bus returns the necessary information to all of the processors, such as info
 
 <p>In order to simulate lazy optimistic transactional memory on top of the MESI split bus, we first had to build a simple memory trace that mimicked transactions between . Each transaction had a read and write, simulating depositing and withdrawing from a bank, as an example. Upon a commit, each memory instruction that was supposed to have occurred gets sent to the split bus, if needed, according to MESI protocol. When it is time for the bus to broadcast the message, each processor checks if any of the values in their read/write set conflict with the committed data according to the lazy optimistic protocol. If so the given processor must abort and restart its transaction by clearing its read/write set and beginning the operations again.</p>
 
+<h3>
+<a id="checking-for-correctness" class="anchor" href="#checking-for-correctness" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Checking for Correctness</h3>
+
+<p>In order to ensure correctness in our simulator we used assert statements to guarantee the validity of our caches.  Some of our statements included, asserting that nothing in the cache was invalid and checking that each cache line correctly followed the MESI protocol after each read and write.</p>
+
 <h2>
 <a id="results" class="anchor" href="#results" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Results</h2>
 
