@@ -163,6 +163,13 @@ The bus returns the necessary information to all of the processors, such as info
 <p>These graphs show the number of times a processor had to invalidate its cache line because a different processor requested something that was in that specific cache line. It was a surprise to see that with a bigger cache there had to be so many more invalidations as compared to smaller caches. However, this does make sense, with a bigger cache more of the values are being stored and held on too, so there is a greater chance that the value any given processor needs is being stored in a different cache.</p>
 
 <h3>
+<a id="comparison-between-different-taskgraphs" class="anchor" href="#comparison-between-different-taskgraphs" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Comparison between different taskgraphs</h3>
+
+<p><img src="images/transactional_mem.png" alt="comparison"></p>
+
+<p>This graph compares the different task graphs with the percent of all messages that need to be sent.  The different task graphs have variable number of cores, black - 5 context id's, cholesky - 8 context id's, and splash2x.cholesky has 16 context id's.  What this shows is that the data for black.taskgraph is used more often by different context id's, as compared to the other two graphs, which keep there data more isolated.  Even though splash.2x has the most number of cores, its data is the most isolated so a smaller percent of all possible messages need to be sent on the bus.</p>
+
+<h3>
 <a id="transactional-memory-1" class="anchor" href="#transactional-memory-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Transactional Memory</h3>
 
 <p><img src="images/transactional_mem.png" alt="TM"></p>
