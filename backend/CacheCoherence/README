@@ -1,0 +1,7 @@
+This is a MESI cache coherence simulator with a split transaction bus interconnect.
+
+To compile, use the Makefile.
+
+To run:
+./ccache <size of cache, log2> <taskgraph>
+Our simulation only supports cache sizes greater than 7.
