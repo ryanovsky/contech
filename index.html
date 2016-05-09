@@ -39,44 +39,49 @@
 
 <p>The Cache Coherence Simulator simulates a multiprocessor snooping-based system that uses the MESI cache coherence protocol with a split transaction bus. The simulator models a multiprocessor system, where each processor has a variable sized L1 4-way associative LRU cache. The simulator can also model transactional memory.</p>
 
-<p>Using the simulation, we have compared the performance of several Contech traces across a range of different parameters, such as the maximum number of outstanding requests on the bus, and the number of cycles it takes to receive data from memory. Performance was measured using the total number of cache hits, misses, and evictions, as well as total clock cycle count, and bus contention.</p>
+<p>Using the simulation, we have compared the performance of several Contech traces across a range of different parameters, such as the cache size, the maximum number of outstanding requests on the bus, and the number of cycles it takes to receive data from memory. Performance was measured using the total number of cache hits, cache misses, as well as total clock cycle count, and the number of messages sent by each processor onto the shared interconnect.</p>
 
 <h2>
 <a id="background" class="anchor" href="#background" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Background</h2>
 
-<p>This project uses Contech memory traces, or taskgraphs, for each parallel program. Using these memory traces, we were able to simulate a program running on a multiprocessor machine, where each thread in the taskgraph is scheduled to a single core with an L1 cache.</p>
+<p>This project uses Contech memory traces, or taskgraphs, for each parallel program. Using these memory traces, we were able to simulate a program running on a multiprocessor machine, where each thread in the taskgraph is scheduled to a single core with an L1 cache. The simulator will output the relevant statistics and measurements - the cache hits, total clock cycles to completion, and number of messages sent on the interconnect - for a given trace.</p>
 
-<p>The simulator keeps track of several statistics as it iterates through the parallel memory trace. These statistics include cache hits, misses, and evictions for each individual L1 cache, as well as the number of times each processor requested the bus, the number of times each processor won the bus, and the total number of clock cycles it takes for the program to complete.</p>
+<p>The simulator keeps track of several statistics as it iterates through the parallel memory trace. These statistics include cache hits, cache misses, the total number of clock cycles it takes for the program to complete, and the number of messages each processor sends on the shared interconnect.</p>
 
-<p>These measurements were recorded as several parameters were adjusted, including the maximum number of outstanding requests on the bus, and the number of cycles it takes to receive data from memory.</p>
+<p>These measurements were recorded as several parameters, including the cache size, the maximum number of outstanding requests on the bus, and the number of cycles it takes to receive data from memory, were adjusted.</p>
 
-<p>The simulator is also able to model transactional memory. Using a transactional memory trace that we created, the simulator is able to emulate the behavior of a hardware transactional memory system with a MESI cache coherence protocol. The simulation results were then compared against results from the same program with locks instead of atomic blocks.</p>
+<p>The simulator is also able to model transactional memory. Using a simple transactional memory trace that we created, the simulator is able to emulate the behavior of a hardware transactional memory system with a MESI cache coherence protocol. The simulation results were then compared against results from the same program where the atomic operations were replaced with locks.</p>
 
 <h2>
 <a id="approach" class="anchor" href="#approach" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Approach</h2>
 
-<p>The simulator is constructed to reflect the hardware, so each major component of the hardware can be seen in the software, where the overall simulator contains the caches, the interconnect, and the transactional memory layer. The system input is a Contech taskgraph, and the outputs are the cache coherence statistics.</p>
+<p>The simulator is constructed to reflect the hardware, where there are three major components of the software simulator: the processor cache, the shared interconnect, and the system simulator. The input to the system is a Contech taskgraph, which the simulator uses to output the cache coherence statistics for the given trace.</p>
 
 <h3>
 <a id="the-contech-taskgraph" class="anchor" href="#the-contech-taskgraph" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>The Contech Taskgraph</h3>
 
-<p>The simulator, written in C++, uses the input taskgraph file to create a list of memory accesses from each core. Special cases are made during runtime to handle locks and barriers and thread synchronization, that included a map of locked elements.</p>
+<p>The simulator, written in C++, uses the given input taskgraph to create a list of memory accesses from each core. Special cases are made during runtime to handle locks and barriers and thread synchronization, that included a map of locked elements.</p>
 
 <h3>
-<a id="the-cache" class="anchor" href="#the-cache" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>The Cache</h3>
+<a id="the-processor-cache" class="anchor" href="#the-processor-cache" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>The Processor Cache</h3>
 
-<p>We started with a simple single core cache simulator, similar to what we created in the 15-213 cachelab assignment, that was provided in the contech github repo (Simple Cache) by Professor Railing.
-Using the list of memory accesses from the taskgraph, the simulator sends each individual processor its memory requests, and must mediate between each processor requesting data on the bus. To do so, each memory request is initially separated into 8 byte requests of either reads or writes (a mem copy is considered to be both). The simulator then must find the cache line that corresponds to the given address, and check the state that the cache line is in. Depending on the state and type of operation, the processor sends a request to the split bus interconnect, according to the MESI protocol.</p>
+<p>We started with a simple single core cache simulator, similar to what we created in the 15-213 cachelab assignment, that was provided in the contech github repository (Simple Cache) by Professor Brian Railing.
+Using the list of memory accesses from the taskgraph, the simulator sends each individual processor the memory requests for each processor, and must mediate between each processor requesting data on the bus. Each memory request is initially separated into 8 byte requests of either reads or writes (a mem copy is considered to be both). The processor cache locates the cache line that corresponds to the given address, and check the state that the cache line is in. Depending on the state and type of operation, the processor sends a request to the split bus interconnect, according to the MESI protocol.</p>
 
 <h3>
-<a id="the-interconnect-a-split-transaction-bus" class="anchor" href="#the-interconnect-a-split-transaction-bus" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>The Interconnect: A Split Transaction Bus</h3>
+<a id="the-shared-interconnect-a-split-transaction-bus" class="anchor" href="#the-shared-interconnect-a-split-transaction-bus" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>The Shared Interconnect: A Split Transaction Bus</h3>
 
-<p>The bus takes the request, and saves it on the request table. If the request table is full then the bus will return with a NACK, and a retry will have to occur. Once the request has been held for a given time period (modeling how long loading data from memory takes), the bus notifies all of the other processors about the request and each processor updates its L1 cache accordingly. The bus then returns to the simulator letting the requesting cache know that it can change its own state accordingly as well.</p>
+<p>The bus takes the request, and saves it on the request table. If the request table is full then the bus will return with a NACK, and a retry will have to occur. Once the request has been held for a given time period (modeling how long loading data from memory takes), the bus notifies all of the other processors about the request and each processor updates its L1 cache accordingly. The bus then returns to the simulator letting the requesting cache know that it can change its own state accordingly.</p>
+
+<h3>
+<a id="the-system-simulator" class="anchor" href="#the-system-simulator" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>The System Simulator</h3>
+
+<p>The system simulator is responsible for reading the taskgraph, mediating requests between each of the processor caches, keeping track of statistics and measurements. The simulator uses a round robin bus arbitration for each of the processor caches, while memory is always given the highest priority.</p>
 
 <h3>
 <a id="transactional-memory" class="anchor" href="#transactional-memory" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Transactional Memory</h3>
 
-<p>In order to simulate lazy optimistic transactional memory, on top of the MESI split bus, we first had to build a simple memory trace that mimicked transactions being sent. Each transaction had a read and write, simulating depositing and withdrawing from a bank, as an example. Upon a commit, each memory instruction that was supposed to have occured gets sent to the split bus, if needed, according to MESI protocol. When it is time for the bus to broadcast the message, each processor checks if any of the values in their read/write set conflict with the committed data according to the lazy optimistic protocol. If so the given processor must abort and restart its transaction by clearing its read/write set and beginning the operations again.</p>
+<p>In order to simulate lazy optimistic transactional memory on top of the MESI split bus, we first had to build a simple memory trace that mimicked transactions between . Each transaction had a read and write, simulating depositing and withdrawing from a bank, as an example. Upon a commit, each memory instruction that was supposed to have occured gets sent to the split bus, if needed, according to MESI protocol. When it is time for the bus to broadcast the message, each processor checks if any of the values in their read/write set conflict with the committed data according to the lazy optimistic protocol. If so the given processor must abort and restart its transaction by clearing its read/write set and beginning the operations again.</p>
 
 <h2>
 <a id="results" class="anchor" href="#results" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Results</h2>
@@ -88,7 +93,7 @@ Using the list of memory accesses from the taskgraph, the simulator sends each i
 <img src="images/cholesky_hits.png" alt="Number of Hits - cholesky Taskgraph">
 <img src="images/splash2x_cholesky_hits.png" alt="Number of Hits - splash2x Taskgraph"></p>
 
-<p>We varied the size of the cache, until the entire data set fit in cache.  When the graph levels out the entire data set fits in cache and we no longer see the effect of evictions due to overflow.  We used this to better understand the later graphs.</p>
+<p>We varied the size of the cache, until the entire data set fit in cache.  When the graph levels out the entire data set fits in cache and we no longer see the effect of evictions due to overflow. We used this to better understand the later graphs.</p>
 
 <h3>
 <a id="length-of-time-to-complete-a-taskgraph" class="anchor" href="#length-of-time-to-complete-a-taskgraph" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Length of time to complete a taskgraph</h3>
@@ -97,7 +102,7 @@ Using the list of memory accesses from the taskgraph, the simulator sends each i
 <img src="images/cholesky_time.png" alt="Time - cholesky Taskgraph">
 <img src="images/splash2x_cholesky_time.png" alt="Time - splash2x Taskgraph"></p>
 
-<p>As can be expected, with a bigger cache there are more hits, less misses, and less evictions leading to a shorter amount of time.</p>
+<p>As can be expected, with a bigger cache there are more hits, less misses, and less evictions leading to a shorter completion time.</p>
 
 <h3>
 <a id="number-of-messages-sent-on-the-split-transaction-bus" class="anchor" href="#number-of-messages-sent-on-the-split-transaction-bus" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Number of messages sent on the split transaction bus</h3>
@@ -106,7 +111,7 @@ Using the list of memory accesses from the taskgraph, the simulator sends each i
 <img src="images/cholesky_sentmsgs.png" alt="msgs - cholesky Taskgraph">
 <img src="images/splash2x_cholesky_sentmsgs.png" alt="msgs - splash2x Taskgraph"></p>
 
-<p>These graphs show the number of messages sent on the split transaction bus based on MESI protocol.  The orange part of the bar is all of the messages that did not have to be sent on the bus, for example if the cache line was already in the exclusive state.  If the cache does not currently have a certain value in the cache, it would by default have to send a message on the bus to all of the other caches, requesting permission for it.  With a bigger cache, there are fewer evictions, so fewer messages have to be sent on the bus in this case.</p>
+<p>These graphs show the number of messages sent on the split transaction bus based on MESI protocol. The orange part of the bar is all of the messages that did not have to be sent on the bus, for example if the cache line was already in the exclusive or the modified state. If the cache does not currently have a certain value in the cache, it would by default have to send a message on the bus to all of the other caches, requesting permission for it. With a bigger cache, there are fewer evictions, so fewer messages have to be sent on the bus in this case.</p>
 
 <h3>
 <a id="number-of-times-a-cache-had-to-invalidate" class="anchor" href="#number-of-times-a-cache-had-to-invalidate" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Number of times a cache had to invalidate</h3>
@@ -115,17 +120,17 @@ Using the list of memory accesses from the taskgraph, the simulator sends each i
 <img src="images/cholesky_invalidated.png" alt="invalidate - cholesky Taskgraph">
 <img src="images/splash2x_cholesky_invalidated.png" alt="invalidate - splash2x Taskgraph"></p>
 
-<p>These graphs show the number of times a processor had to invalidate its cache line because a different processor requested something that was in that specific cache line.  It was a surprise to see that with a bigger cache there had to be so many more invalidations as compared to smaller caches.  However, this does make sense, with a bigger cache more of the values are being stored and held on too, so there is a greater chance that the value any given processor needs is being stored in a different cache.</p>
+<p>These graphs show the number of times a processor had to invalidate its cache line because a different processor requested something that was in that specific cache line. It was a surprise to see that with a bigger cache there had to be so many more invalidations as compared to smaller caches. However, this does make sense, with a bigger cache more of the values are being stored and held on too, so there is a greater chance that the value any given processor needs is being stored in a different cache.</p>
 
 <h3>
 <a id="transactional-memory-1" class="anchor" href="#transactional-memory-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Transactional Memory</h3>
 
 <p><img src="images/transactional_mem.png" alt="TM"></p>
 
-<p>This graph is really interesting because it shows the difference between a trace that we created using transactional memory as compared to how that trace would have run with if it was just using locks. For this example we used the bank analogy from class.  Each processor can deposit or withdraw from a bank, each transaction has a read or write.  The bank account is located at a specific example, in this case we decided to put all of the addresses on the same cache line in order to show more clearly the effect of using transactions.
-As you can see from the graph, the lock example has more misses, messages being sent, and invalidations.  Essentially, at almost every memory request a cache line will have to be flushed to memory to allow a different processor to get the data; because of each invalidation caches do not hold on to values in the exclusive state, so more messages will have to be sent, and there will clearly be more misses.  What is most interesting about this graph, however, is that even though there are clearly more misses, messages sent, and invalidations using locks, the lock example actually still runs faster.  This is because, constantly having to restart memory transactions really slows down the completion of transactional memory.</p>
+<p>This graph is really interesting because it shows the difference between a trace that we created using transactional memory as compared to how that program would have run with if it was just using locks. For this example we used the bank example from class. Each processor can deposit or withdraw from a bank, each transaction has a read or write. The bank account is located at a specific example, in this case we decided to put all of the addresses on the same cache line in order to show more clearly the effect of using transactions.
+As you can see from the graph, the lock example has more misses, messages being sent, and invalidations. Essentially, at almost every memory request a cache line will have to be flushed to memory to allow a different processor to get the data; because of each invalidation caches do not hold on to values in the exclusive state, so more messages will have to be sent, and there will clearly be more misses.  What is most interesting about this graph, however, is that even though there are clearly more misses, messages sent, and invalidations using locks, the lock example actually still runs faster. This is because, constantly having to restart memory transactions really slows down the completion of transactions.</p>
 
-<p>An important thing to note about the above transactional memory example, is that we are comparing a trace that we created, which only looks at the memory usage of transactions being performed, to a Contech taskgraph.  The Contech taskgraph includes extra memory instructions from the overhead of the lock example, this comes from initialization.
+<p>An important thing to note about the above transactional memory example, is that we are comparing a trace that we created, which only looks at the memory usage of transactions being performed, to a Contech taskgraph. The Contech taskgraph includes extra memory instructions from the overhead of the lock example, this comes from initialization.
 To build on this project in the future, we will create a more robust memory trace for transactional memory, which would be more comparable to a Contech taskgraph.</p>
 
 <h2>
@@ -136,11 +141,17 @@ To build on this project in the future, we will create a more robust memory trac
 <h2>
 <a id="general-contech-info" class="anchor" href="#general-contech-info" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>General Contech info</h2>
 
-<p>Contech is a compiler-based (specifically LLVM) instrumentation, designed to efficiently record the execution trace, memory accesses, and parallel interactions of a program. The instrumentation has been tested across programs written in C, C++, and Fortran, as well as those using pthreads, OpenMP, and MPI.
-Contech is documented in the wiki.
-Authors and Contributors <a href="https://github.com/bprail" class="user-mention">@bprail</a> is the software architect of this project. Contributions have also been made by <a href="https://github.com/ehein6" class="user-mention">@ehein6</a>. Additional components have been provided by <a href="https://github.com/caparrov" class="user-mention">@caparrov</a>.
-Publication Contech has appeared in the journal, ACM Transactions on Architecture and Code Optimization.
-Contech appeared as a tutorial at IISWC 2015.</p>
+<p>Contech is a compiler-based (specifically <a href="http://llvm.org">LLVM</a>) instrumentation, designed to efficiently record the execution trace, memory accesses, and parallel interactions of a program.  The instrumentation has been tested across programs written in C, C++, and Fortran, as well as those using pthreads, OpenMP, and MPI.</p>
+
+<p>Contech is documented in the <a href="https://github.com/bprail/contech/wiki/Contech">wiki</a>.</p>
+
+<p>Authors and Contributors
+<a href="https://github.com/bprail" class="user-mention">@bprail</a> is the software architect of this project.  Contributions have also been made by <a href="https://github.com/ehein6" class="user-mention">@ehein6</a>.  Additional components have been provided by <a href="https://github.com/caparrov" class="user-mention">@caparrov</a>.</p>
+
+<p>Publication
+Contech has appeared in the journal, <a href="http://dx.doi.org/10.1145/2776893">ACM Transactions on Architecture and Code Optimization</a>.</p>
+
+<p>Contech appeared as a tutorial at <a href="http://www.iiswc.org/iiswc2015/index.html">IISWC 2015</a>.</p>
 
 <h2>
 <a id="list-of-work-by-each-student" class="anchor" href="#list-of-work-by-each-student" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>List of work by each Student</h2>
@@ -178,21 +189,6 @@ May 3- 9: Create a presentation, do analysis, compare the ring to the split tran
 <a id="results-1" class="anchor" href="#results-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Results</h2>
 
 <p>Our results will be a set of graphs and analysis, of hits and misses over time created from different Contech TaskGraphs. </p>
-
-<h2>
-<a id="general-contech-info-1" class="anchor" href="#general-contech-info-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>General Contech info</h2>
-
-<p>Contech is a compiler-based (specifically <a href="http://llvm.org">LLVM</a>) instrumentation, designed to efficiently record the execution trace, memory accesses, and parallel interactions of a program.  The instrumentation has been tested across programs written in C, C++, and Fortran, as well as those using pthreads, OpenMP, and MPI.</p>
-
-<p>Contech is documented in the <a href="https://github.com/bprail/contech/wiki/Contech">wiki</a>.</p>
-
-<p>Authors and Contributors
-<a href="https://github.com/bprail" class="user-mention">@bprail</a> is the software architect of this project.  Contributions have also been made by <a href="https://github.com/ehein6" class="user-mention">@ehein6</a>.  Additional components have been provided by <a href="https://github.com/caparrov" class="user-mention">@caparrov</a>.</p>
-
-<p>Publication
-Contech has appeared in the journal, <a href="http://dx.doi.org/10.1145/2776893">ACM Transactions on Architecture and Code Optimization</a>.</p>
-
-<p>Contech appeared as a tutorial at <a href="http://www.iiswc.org/iiswc2015/index.html">IISWC 2015</a>.</p>
       </section>
     </div>
 
