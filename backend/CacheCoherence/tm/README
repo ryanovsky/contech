@@ -1,0 +1,12 @@
+This is a MESI cache coherence simulator with a split transaction bus interconnect using lazy-optimistic transactional memory.
+
+To compile, use the Makefile.
+To run:
+./ccache <size of cache, log2> <input file>
+Our simulation only supports cache sizes greater than 7.
+A simple input file was provided - input.txt.
+
+Input files should be formatted as:
+<processor num>: <transaction command> <address>
+
+transaction commands can be Xbegin, load, store, and Xcommit.
