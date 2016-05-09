@@ -167,7 +167,7 @@ The bus returns the necessary information to all of the processors, such as info
 
 <p><img src="images/comparison.png" alt="comparison"></p>
 
-<p>This graph compares the different task graphs with the percent of all messages that need to be sent.  The different task graphs have variable number of cores, black - 5 context id's, cholesky - 8 context id's, and splash2x.cholesky has 16 context id's.  What this shows is that the data for black.taskgraph is used more often by different context id's, as compared to the other two graphs, which keep there data more isolated.  Even though splash.2x has the most number of cores, its data is the most isolated so a smaller percent of all possible messages need to be sent on the bus.</p>
+<p>This graph compares the different task graphs with the percent of all messages that need to be sent.  The different task graphs have variable number of cores, black - 4 context id's, cholesky - 8 context id's, and splash2x.cholesky has 16 context id's.  What this shows is that the data for black.taskgraph is used more often by different context id's, as compared to the other two graphs, which keep there data more isolated.  Even though splash2x.cholesky has twice as many cores as cholesky, it does not need to send a considerable amount more on the bus.  Even though black.taskgraph has the least number of cores, it's data is not as isolated and in comparison needs to send more data on the bus.</p>
 
 <h3>
 <a id="transactional-memory-1" class="anchor" href="#transactional-memory-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Transactional Memory</h3>
