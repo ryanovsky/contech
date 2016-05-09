@@ -94,6 +94,8 @@ The bus returns the necessary information to all of the processors, such as info
 <h2>
 <a id="results" class="anchor" href="#results" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Results</h2>
 
+<p>While we only had time to run 3 tests comprehensively, in the future we could run more benchmark task graphs.</p>
+
 <h3>
 <a id="number-of-cache-hits-for-caches-of-different-size" class="anchor" href="#number-of-cache-hits-for-caches-of-different-size" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Number of cache hits for caches of different size</h3>
 
@@ -107,7 +109,7 @@ The bus returns the necessary information to all of the processors, such as info
 
 <p><img src="images/splash2x_cholesky_hits.png" alt="Number of Hits - splash2x Taskgraph"></p>
 
-<p>splash2x.cholesky.taskgraph</p>
+<p>splash2x.cholesky_16_simmedium.taskgraph</p>
 
 <p>We varied the size of the cache, until the entire data set fit in cache.  When the graph levels out the entire data set fits in cache and we no longer see the effect of evictions due to overflow. We used this to better understand the later graphs.</p>
 
@@ -124,7 +126,7 @@ The bus returns the necessary information to all of the processors, such as info
 
 <p><img src="images/splash2x_cholesky_time.png" alt="Time - splash2x Taskgraph"></p>
 
-<p>splash2x.cholesky.taskgraph</p>
+<p>splash2x.cholesky_16_simmedium.taskgraph</p>
 
 <p>As can be expected, with a bigger cache there are more hits, less misses, and less evictions leading to a shorter completion time.</p>
 
@@ -141,7 +143,7 @@ The bus returns the necessary information to all of the processors, such as info
 
 <p><img src="images/splash2x_cholesky_sentmsgs.png" alt="msgs - splash2x Taskgraph"></p>
 
-<p>splash2x.cholesky.taskgraph</p>
+<p>splash2x.cholesky_16_simmedium.taskgraph</p>
 
 <p>These graphs show the number of messages sent on the split transaction bus based on MESI protocol. The orange part of the bar is all of the messages that did not have to be sent on the bus, for example if the cache line was already in the exclusive or the modified state. If the cache does not currently have a certain value in the cache, it would by default have to send a message on the bus to all of the other caches, requesting permission for it. With a bigger cache, there are fewer evictions, so fewer messages have to be sent on the bus in this case.</p>
 
@@ -158,7 +160,7 @@ The bus returns the necessary information to all of the processors, such as info
 
 <p><img src="images/splash2x_cholesky_invalidated.png" alt="invalidate - splash2x Taskgraph"></p>
 
-<p>splash2x.cholesky.taskgraph</p>
+<p>splash2x.cholesky_16_simmedium.taskgraph</p>
 
 <p>These graphs show the number of times a processor had to invalidate its cache line because a different processor requested something that was in that specific cache line. It was a surprise to see that with a bigger cache there had to be so many more invalidations as compared to smaller caches. However, this does make sense, with a bigger cache more of the values are being stored and held on too, so there is a greater chance that the value any given processor needs is being stored in a different cache.</p>
 
@@ -167,7 +169,9 @@ The bus returns the necessary information to all of the processors, such as info
 
 <p><img src="images/comparison.png" alt="comparison"></p>
 
-<p>This graph compares the different task graphs with the percent of all messages that need to be sent.  The different task graphs have variable number of cores, black - 4 context id's, cholesky - 8 context id's, and splash2x.cholesky has 16 context id's.  What this shows is that the data for black.taskgraph is used more often by different context id's, as compared to the other two graphs, which keep there data more isolated.  Even though splash2x.cholesky has twice as many cores as cholesky, it does not need to send a considerable amount more on the bus.  Even though black.taskgraph has the least number of cores, it's data is not as isolated and in comparison needs to send more data on the bus.</p>
+<p>This graph compares the different task graphs with the percent of all messages that need to be sent.  The different task graphs have variable number of cores, black - 4 context id's, cholesky - 8 context id's, and splash2x.cholesky_16_simmedium.taskgraph
+ has 16 context id's.  What this shows is that the data for black.taskgraph is used more often by different context id's, as compared to the other two graphs, which keep there data more isolated.  Even though splash2x.cholesky_16_simmedium.taskgraph
+ has twice as many cores as cholesky, it does not need to send a considerable amount more on the bus.  Even though black.taskgraph has the least number of cores, it's data is not as isolated and in comparison needs to send more data on the bus.</p>
 
 <h3>
 <a id="transactional-memory-1" class="anchor" href="#transactional-memory-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Transactional Memory</h3>
