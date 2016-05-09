@@ -81,10 +81,47 @@ Using the list of memory accesses from the taskgraph, the simulator sends each i
 <h2>
 <a id="results" class="anchor" href="#results" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Results</h2>
 
+<h3>
+<a id="number-of-cache-hits-for-caches-of-different-size" class="anchor" href="#number-of-cache-hits-for-caches-of-different-size" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Number of cache hits for caches of different size</h3>
+
 <p><img src="images/black_hits.png" alt="Number of Hits - Black Taskgraph">
-Graphs will be up soon.  So far the data makes sense and is as expected.
-We varied 2 parameters, the total time it takes to retrieve data from memory and the maximum number of outstanding requests, while running simulations on several benchmark program traces. We are also varying the size of the caches to see the effect of the entire data set fitting in cache. The results can be seen below.
-[Graphs of results]</p>
+<img src="images/cholesky_hits.png" alt="Number of Hits - cholesky Taskgraph">
+<img src="images/splash2x_cholesky_hits.png" alt="Number of Hits - splash2x Taskgraph">
+We varied the size of the cache, until the entire data set fit in cache.  When the graph levels out the entire data set fits in cache and we no longer see the effect of evictions due to overflow.  We used this to better understand the later graphs.</p>
+
+<h3>
+<a id="length-of-time-to-complete-a-taskgraph" class="anchor" href="#length-of-time-to-complete-a-taskgraph" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Length of time to complete a taskgraph</h3>
+
+<p><img src="images/black_time.png" alt="Time - Black Taskgraph">
+<img src="images/cholesky_time.png" alt="Time - cholesky Taskgraph">
+<img src="images/splash2x_cholesky_time.png" alt="Time - splash2x Taskgraph">
+As can be expected, with a bigger cache there are more hits, less misses, and less evictions leading to a shorter amount of time.</p>
+
+<h3>
+<a id="number-of-messages-sent-on-the-split-transaction-bus" class="anchor" href="#number-of-messages-sent-on-the-split-transaction-bus" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Number of messages sent on the split transaction bus</h3>
+
+<p><img src="images/black_sentmsgs.png" alt="msgs - Black Taskgraph">
+<img src="images/cholesky_sentmsgs.png" alt="msgs - cholesky Taskgraph">
+<img src="images/splash2x_cholesky_sentmsgs.png" alt="msgs - splash2x Taskgraph">
+These graphs show the number of messages sent on the split transaction bus based on MESI protocol.  The orange part of the bar is all of the messages that did not have to be sent on the bus, for example if the cache line was already in the exclusive state.  If the cache does not currently have a certain value in the cache, it would by default have to send a message on the bus to all of the other caches, requesting permission for it.  With a bigger cache, there are fewer evictions, so fewer messages have to be sent on the bus in this case.</p>
+
+<h3>
+<a id="number-of-times-a-cache-had-to-invalidate" class="anchor" href="#number-of-times-a-cache-had-to-invalidate" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Number of times a cache had to invalidate</h3>
+
+<p><img src="images/black_invalidated.png" alt="invalidate - Black Taskgraph">
+<img src="images/cholesky_invalidated.png" alt="invalidate - cholesky Taskgraph">
+<img src="images/splash2x_cholesky_invalidated.png" alt="invalidate - splash2x Taskgraph">
+These graphs show the number of times a processor had to invalidate its cache line because a different processor requested something that was in that specific cache line.  It was a surprise to see that with a bigger cache there had to be so many more invalidations as compared to smaller caches.  However, this does make sense, with a bigger cache more of the values are being stored and held on too, so there is a greater chance that the value any given processor needs is being stored in a different cache.</p>
+
+<h3>
+<a id="transactional-memory-1" class="anchor" href="#transactional-memory-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Transactional Memory</h3>
+
+<p><img src="images/transactional_mem.png" alt="TM">
+This graph is really interesting because it shows the difference between a trace that we created using transactional memory as compared to how that trace would have run with if it was just using locks. For this example we used the bank analogy from class.  Each processor can deposit or withdraw from a bank, each transaction has a read or write.  The bank account is located at a specific example, in this case we decided to put all of the addresses on the same cache line in order to show more clearly the effect of using transactions.
+As you can see from the graph, the lock example has more misses, messages being sent, and invalidations.  Essentially, at almost every memory request a cache line will have to be flushed to memory to allow a different processor to get the data; because of each invalidation caches do not hold on to values in the exclusive state, so more messages will have to be sent, and there will clearly be more misses.  What is most interesting about this graph, however, is that even though there are clearly more misses, messages sent, and invalidations using locks, the lock example actually still runs faster.  This is because, constantly having to restart memory transactions really slows down the completion of transactional memory.</p>
+
+<p>An important thing to note about the above transactional memory example, is that we are comparing a trace that we created, which only looks at the memory usage of transactions being performed, to a Contech taskgraph.  The Contech taskgraph includes extra memory instructions from the overhead of the lock example, this comes from initialization.
+To build on this project in the future, we will create a more robust memory trace for transactional memory, which would be more comparable to a Contech taskgraph.</p>
 
 <h2>
 <a id="references" class="anchor" href="#references" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>References</h2>
