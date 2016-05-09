@@ -165,7 +165,7 @@ The bus returns the necessary information to all of the processors, such as info
 <h3>
 <a id="comparison-between-different-taskgraphs" class="anchor" href="#comparison-between-different-taskgraphs" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Comparison between different taskgraphs</h3>
 
-<p><img src="images/transactional_mem.png" alt="comparison"></p>
+<p><img src="images/comparison.png" alt="comparison"></p>
 
 <p>This graph compares the different task graphs with the percent of all messages that need to be sent.  The different task graphs have variable number of cores, black - 5 context id's, cholesky - 8 context id's, and splash2x.cholesky has 16 context id's.  What this shows is that the data for black.taskgraph is used more often by different context id's, as compared to the other two graphs, which keep there data more isolated.  Even though splash.2x has the most number of cores, its data is the most isolated so a smaller percent of all possible messages need to be sent on the bus.</p>
 
