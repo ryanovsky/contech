@@ -97,9 +97,15 @@ The bus returns the necessary information to all of the processors, such as info
 <h3>
 <a id="number-of-cache-hits-for-caches-of-different-size" class="anchor" href="#number-of-cache-hits-for-caches-of-different-size" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Number of cache hits for caches of different size</h3>
 
-<p><img src="images/black_hits.png" alt="Number of Hits - Black Taskgraph">
-<img src="images/cholesky_hits.png" alt="Number of Hits - cholesky Taskgraph">
+<p><img src="images/black_hits.png" alt="Number of Hits - Black Taskgraph"></p>
+
+<p>black.taskgraph
+<img src="images/cholesky_hits.png" alt="Number of Hits - cholesky Taskgraph"></p>
+
+<p>cholesky.taskgraph
 <img src="images/splash2x_cholesky_hits.png" alt="Number of Hits - splash2x Taskgraph"></p>
+
+<p>splash2x.cholesky.taskgraph</p>
 
 <p>We varied the size of the cache, until the entire data set fit in cache.  When the graph levels out the entire data set fits in cache and we no longer see the effect of evictions due to overflow. We used this to better understand the later graphs.</p>
 
@@ -107,17 +113,29 @@ The bus returns the necessary information to all of the processors, such as info
 <a id="length-of-time-to-complete-a-taskgraph" class="anchor" href="#length-of-time-to-complete-a-taskgraph" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Length of time to complete a taskgraph</h3>
 
 <p><img src="images/black_time.png" alt="Time - Black Taskgraph">
-<img src="images/cholesky_time.png" alt="Time - cholesky Taskgraph">
+black.taskgraph</p>
+
+<p><img src="images/cholesky_time.png" alt="Time - cholesky Taskgraph"></p>
+
+<p>cholesky.taskgraph
 <img src="images/splash2x_cholesky_time.png" alt="Time - splash2x Taskgraph"></p>
+
+<p>splash2x.cholesky.taskgraph</p>
 
 <p>As can be expected, with a bigger cache there are more hits, less misses, and less evictions leading to a shorter completion time.</p>
 
 <h3>
 <a id="number-of-messages-sent-on-the-split-transaction-bus" class="anchor" href="#number-of-messages-sent-on-the-split-transaction-bus" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Number of messages sent on the split transaction bus</h3>
 
-<p><img src="images/black_sentmsgs.png" alt="msgs - Black Taskgraph">
-<img src="images/cholesky_sentmsgs.png" alt="msgs - cholesky Taskgraph">
+<p><img src="images/black_sentmsgs.png" alt="msgs - Black Taskgraph"></p>
+
+<p>black.taskgraph
+<img src="images/cholesky_sentmsgs.png" alt="msgs - cholesky Taskgraph"></p>
+
+<p>cholesky.taskgraph
 <img src="images/splash2x_cholesky_sentmsgs.png" alt="msgs - splash2x Taskgraph"></p>
+
+<p>splash2x.cholesky.taskgraph</p>
 
 <p>These graphs show the number of messages sent on the split transaction bus based on MESI protocol. The orange part of the bar is all of the messages that did not have to be sent on the bus, for example if the cache line was already in the exclusive or the modified state. If the cache does not currently have a certain value in the cache, it would by default have to send a message on the bus to all of the other caches, requesting permission for it. With a bigger cache, there are fewer evictions, so fewer messages have to be sent on the bus in this case.</p>
 
